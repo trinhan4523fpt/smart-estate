@@ -79,7 +79,12 @@ public static class SeedData
             var broker = User.Create("broker@local", "Broker Joe", 3);
             broker.SetPasswordHash(hasher.Hash("Broker123!"));
 
-            ctx.Users.AddRange(admin, seller, broker);
+            var user1 = User.Create("user1@local", "User One", 1);
+            user1.SetPasswordHash(hasher.Hash("User123!"));
+            var user2 = User.Create("user2@local", "User Two", 1);
+            user2.SetPasswordHash(hasher.Hash("User123!"));
+
+            ctx.Users.AddRange(admin, seller, broker, user1, user2);
             await ctx.SaveChangesAsync();
 
             // Broker profile
@@ -130,6 +135,49 @@ public static class SeedData
                 Url = "/uploads/sample2.jpg",
                 SortOrder = 2,
                 Caption = "Kitchen"
+            });
+            await ctx.SaveChangesAsync();
+
+            // Seed initial points for convenience
+            var now = clock.UtcNow;
+            var monthKey = now.ToString("yyyy-MM");
+
+            var up1 = UserPoints.Create(user1.Id, monthKey);
+            up1.AddPermanent(50);
+            ctx.UserPoints.Add(up1);
+            ctx.PointLedgerEntries.Add(new PointLedgerEntry
+            {
+                UserId = user1.Id,
+                Delta = 50,
+                Reason = "PURCHASE_POINTS",
+                RefType = "Seed",
+                RefId = null,
+                IsMonthlyBucket = false,
+                BalanceMonthlyAfter = up1.MonthlyPoints,
+                BalancePermanentAfter = up1.PermanentPoints,
+                Bucket = "PERMANENT",
+                MonthKey = null,
+                TxType = "PURCHASE_POINTS",
+                Note = "Seed"
+            });
+
+            var up2 = UserPoints.Create(user2.Id, monthKey);
+            up2.AddPermanent(5);
+            ctx.UserPoints.Add(up2);
+            ctx.PointLedgerEntries.Add(new PointLedgerEntry
+            {
+                UserId = user2.Id,
+                Delta = 5,
+                Reason = "PURCHASE_POINTS",
+                RefType = "Seed",
+                RefId = null,
+                IsMonthlyBucket = false,
+                BalanceMonthlyAfter = up2.MonthlyPoints,
+                BalancePermanentAfter = up2.PermanentPoints,
+                Bucket = "PERMANENT",
+                MonthKey = null,
+                TxType = "PURCHASE_POINTS",
+                Note = "Seed"
             });
             await ctx.SaveChangesAsync();
 

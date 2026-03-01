@@ -30,6 +30,10 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         b.HasIndex(x => x.PayerUserId);
         b.HasIndex(x => x.TakeoverRequestId);
         b.HasIndex(x => x.PointPurchaseId);
+<<<<<<< Updated upstream
         b.HasIndex(x => new { x.Provider, x.ProviderRef }).IsUnique(false);
+=======
+        b.HasIndex(x => x.ProviderRef);
+>>>>>>> Stashed changes
     }
 }

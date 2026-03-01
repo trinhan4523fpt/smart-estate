@@ -112,7 +112,15 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Run database seeding in development / first run
-await app.EnsureSeedDataAsync();
+try
+{
+    await app.EnsureSeedDataAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Program");
+    logger.LogError(ex, "Database seeding failed, continuing anyway");
+}
 
 // Serve static files from "uploads" folder
 app.UseStaticFiles(new StaticFileOptions

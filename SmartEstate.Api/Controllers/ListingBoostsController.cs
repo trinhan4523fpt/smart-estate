@@ -18,7 +18,11 @@ public sealed class ListingBoostsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/boost")]
+<<<<<<< Updated upstream
     [Authorize(Roles = "User,Broker,Admin")]
+=======
+    [Authorize(Roles = "Seller,Broker,Admin")]
+>>>>>>> Stashed changes
     [ProducesResponseType(200)]
     [ProducesResponseType(typeof(AppError), 400)]
     [ProducesResponseType(typeof(AppError), 401)]
@@ -46,3 +50,7 @@ public sealed class ListingBoostsController : ControllerBase
         };
     }
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

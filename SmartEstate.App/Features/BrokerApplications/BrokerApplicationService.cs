@@ -31,11 +31,18 @@ public sealed class BrokerApplicationService
         var userId = _currentUser.UserId;
         if (userId is null) return Result<BrokerApplicationResponse>.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
 
+<<<<<<< Updated upstream
         var user = await _db.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == userId.Value && !x.IsDeleted && x.IsActive, ct);
         if (user is null) return Result<BrokerApplicationResponse>.Fail(ErrorCodes.NotFound, "User not found.");
 
         if (string.Equals(user.Role.Name, "Broker", StringComparison.OrdinalIgnoreCase)
             || string.Equals(user.Role.Name, "Admin", StringComparison.OrdinalIgnoreCase))
+=======
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == userId.Value && !x.IsDeleted && x.IsActive, ct);
+        if (user is null) return Result<BrokerApplicationResponse>.Fail(ErrorCodes.NotFound, "User not found.");
+
+        if (user.Role == UserRole.Broker || user.Role == UserRole.Admin)
+>>>>>>> Stashed changes
             return Result<BrokerApplicationResponse>.Fail(ErrorCodes.Validation, "User already broker/admin.");
 
         var hasPending = await _db.BrokerApplications.AnyAsync(x => x.UserId == userId.Value && !x.IsDeleted && x.Status == BrokerApplicationStatus.Pending, ct);
@@ -61,13 +68,22 @@ public sealed class BrokerApplicationService
         var adminId = _currentUser.UserId;
         if (adminId is null) return Result.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
 
+<<<<<<< Updated upstream
         var admin = await _db.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == adminId.Value && !x.IsDeleted && x.IsActive, ct);
         if (admin is null || !string.Equals(admin.Role.Name, "Admin", StringComparison.OrdinalIgnoreCase)) return Result.Fail(ErrorCodes.Forbidden, "Admin only.");
+=======
+        var admin = await _db.Users.FirstOrDefaultAsync(x => x.Id == adminId.Value && !x.IsDeleted && x.IsActive, ct);
+        if (admin is null || (admin.Role != UserRole.Admin)) return Result.Fail(ErrorCodes.Forbidden, "Admin only.");
+>>>>>>> Stashed changes
 
         var app = await _db.BrokerApplications.FirstOrDefaultAsync(x => x.Id == applicationId && !x.IsDeleted, ct);
         if (app is null) return Result.Fail(ErrorCodes.NotFound, "Application not found.");
 
+<<<<<<< Updated upstream
         var user = await _db.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == app.UserId && !x.IsDeleted && x.IsActive, ct);
+=======
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Id == app.UserId && !x.IsDeleted && x.IsActive, ct);
+>>>>>>> Stashed changes
         if (user is null) return Result.Fail(ErrorCodes.NotFound, "User not found.");
 
         if (app.Status == BrokerApplicationStatus.Approved) return Result.Ok();
@@ -77,7 +93,11 @@ public sealed class BrokerApplicationService
         var r = await _points.TrySpendAsync(
             app.UserId,
             60,
+<<<<<<< Updated upstream
             "SPEND_BROKER_ACTIVATION",
+=======
+            "BROKER_ACTIVATION",
+>>>>>>> Stashed changes
             "BrokerApplication",
             app.Id,
             ct);
@@ -90,9 +110,13 @@ public sealed class BrokerApplicationService
         app.IsActivationPaid = true;
         app.ActivationPaidAt = _clock.UtcNow;
 
+<<<<<<< Updated upstream
         var brokerRole = await _db.Roles.AsNoTracking().FirstOrDefaultAsync(x => x.Name == "Broker", ct);
         if (brokerRole is not null)
             user.SetRoleId(brokerRole.Id);
+=======
+        user.SetRole(UserRole.Broker);
+>>>>>>> Stashed changes
 
         await _db.SaveChangesAsync(true, ct);
         return Result.Ok();
@@ -103,8 +127,13 @@ public sealed class BrokerApplicationService
         var adminId = _currentUser.UserId;
         if (adminId is null) return Result.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
 
+<<<<<<< Updated upstream
         var admin = await _db.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Id == adminId.Value && !x.IsDeleted && x.IsActive, ct);
         if (admin is null || !string.Equals(admin.Role.Name, "Admin", StringComparison.OrdinalIgnoreCase)) return Result.Fail(ErrorCodes.Forbidden, "Admin only.");
+=======
+        var admin = await _db.Users.FirstOrDefaultAsync(x => x.Id == adminId.Value && !x.IsDeleted && x.IsActive, ct);
+        if (admin is null || (admin.Role != UserRole.Admin)) return Result.Fail(ErrorCodes.Forbidden, "Admin only.");
+>>>>>>> Stashed changes
 
         var app = await _db.BrokerApplications.FirstOrDefaultAsync(x => x.Id == applicationId && !x.IsDeleted, ct);
         if (app is null) return Result.Fail(ErrorCodes.NotFound, "Application not found.");
@@ -123,3 +152,7 @@ public sealed class BrokerApplicationService
     private static BrokerApplicationResponse ToResponse(BrokerApplication app)
         => new BrokerApplicationResponse(app.Id, app.UserId, app.DocUrl, (int)app.Status, app.IsActivationPaid, app.ActivationPaidAt, app.ReviewedByAdminId, app.ReviewedAt);
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

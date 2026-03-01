@@ -38,9 +38,13 @@ public class SmartEstateDbContext : DbContext
     public DbSet<PointPurchase> PointPurchases => Set<PointPurchase>();
     public DbSet<BrokerApplication> BrokerApplications => Set<BrokerApplication>();
     public DbSet<ListingBoost> ListingBoosts => Set<ListingBoost>();
+<<<<<<< Updated upstream
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+=======
+    public DbSet<ConversationReadState> ConversationReadStates => Set<ConversationReadState>();
+>>>>>>> Stashed changes
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

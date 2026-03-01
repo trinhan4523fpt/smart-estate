@@ -56,9 +56,12 @@ public sealed class ListingService
             mod.Reason,
             mod.FlagsJson);
 
+<<<<<<< Updated upstream
         if (mod.Decision == "AUTO_REJECT")
             await _points.AddPermanentAsync(listing.CreatedByUserId, 1, "REFUND_POST", "Listing", listing.Id, ct);
 
+=======
+>>>>>>> Stashed changes
         _db.Listings.Add(listing);
         _db.ModerationReports.Add(report);
         await _db.SaveChangesAsync(true, ct);

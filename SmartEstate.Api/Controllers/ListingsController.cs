@@ -74,7 +74,11 @@ public sealed class ListingsController : ControllerBase
     /// </remarks>
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+<<<<<<< Updated upstream
     [ProducesResponseType(typeof(SmartEstate.App.Features.Listings.Dtos.ListingDetailResponse), 200)]
+=======
+    [ProducesResponseType(typeof(ListingDetailResponse), 200)]
+>>>>>>> Stashed changes
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetDetail([FromRoute] Guid id, CancellationToken ct)
     {

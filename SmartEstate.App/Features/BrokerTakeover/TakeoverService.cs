@@ -127,6 +127,7 @@ public sealed class TakeoverService
         // accept => domain transition
         takeover.Accept(_clock.UtcNow);
 
+<<<<<<< Updated upstream
         // complete takeover and assign broker
         takeover.Complete(_clock.UtcNow);
 
@@ -134,6 +135,32 @@ public sealed class TakeoverService
         if (listing is null) return Result<TakeoverResponse>.Fail(ErrorCodes.NotFound, "Listing not found.");
         listing.AssignBroker(takeover.BrokerUserId);
 
+=======
+        // seller pays -30 points (no negative)
+        var spend = await _points.TrySpendAsync(
+            takeover.SellerUserId,
+            30,
+            "BROKER_TAKEOVER_FEE",
+            "TakeoverRequest",
+            takeover.Id,
+            ct);
+
+        if (!spend.IsSuccess)
+        {
+            // rollback accept to pending if insufficient points
+            takeover.Reject(_clock.UtcNow);
+            await _db.SaveChangesAsync(true, ct);
+            return Result<TakeoverResponse>.Fail(ErrorCodes.Validation, "INSUFFICIENT_POINTS");
+        }
+
+        // complete takeover and assign broker
+        takeover.Complete(_clock.UtcNow);
+
+        var listing = await _db.Listings.FirstOrDefaultAsync(x => x.Id == takeover.ListingId && !x.IsDeleted, ct);
+        if (listing is null) return Result<TakeoverResponse>.Fail(ErrorCodes.NotFound, "Listing not found.");
+        listing.AssignBroker(takeover.BrokerUserId);
+
+>>>>>>> Stashed changes
         // update conversations current responsible user
         var convs = await _db.Conversations.Where(x => x.ListingId == takeover.ListingId && !x.IsDeleted).ToListAsync(ct);
         foreach (var c in convs)
@@ -145,8 +172,13 @@ public sealed class TakeoverService
 
         return Result<TakeoverResponse>.Ok(new TakeoverResponse(
             takeover.Id, takeover.ListingId, takeover.SellerUserId, takeover.BrokerUserId,
+<<<<<<< Updated upstream
             takeover.Payer, takeover.IsFeePaid, takeover.PaidAt,
             takeover.Status
+=======
+            takeover.Payer, 30m, "PTS",
+            takeover.Status, null, null
+>>>>>>> Stashed changes
         ));
     }
 

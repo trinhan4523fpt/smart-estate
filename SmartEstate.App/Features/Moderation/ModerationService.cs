@@ -6,7 +6,10 @@ using SmartEstate.Infrastructure.Persistence;
 using SmartEstate.Shared.Errors;
 using SmartEstate.Shared.Results;
 using SmartEstate.Shared.Time;
+<<<<<<< Updated upstream
 using SmartEstate.App.Features.Points;
+=======
+>>>>>>> Stashed changes
 
 namespace SmartEstate.App.Features.Moderation;
 
@@ -15,18 +18,28 @@ public sealed class ModerationService
     private readonly SmartEstateDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IClock _clock;
+<<<<<<< Updated upstream
     private readonly PointsService _points;
+=======
+>>>>>>> Stashed changes
 
     public ModerationService(
         SmartEstateDbContext db,
         ICurrentUser currentUser,
+<<<<<<< Updated upstream
         IClock clock,
         PointsService points)
+=======
+        IClock clock)
+>>>>>>> Stashed changes
     {
         _db = db;
         _currentUser = currentUser;
         _clock = clock;
+<<<<<<< Updated upstream
         _points = points;
+=======
+>>>>>>> Stashed changes
     }
 
     public async Task<Result<IReadOnlyList<PendingListingModerationItemDto>>> GetPendingListingsAsync(CancellationToken ct = default)
@@ -132,8 +145,11 @@ public sealed class ModerationService
         if (listing is null) return Result.Fail(ErrorCodes.NotFound, "Listing not found.");
 
         listing.Reject(reason.Trim());
+<<<<<<< Updated upstream
         // Hoàn điểm nếu bài đã chiếm điểm trước đó
         await _points.AddPermanentAsync(listing.CreatedByUserId, 1, "REFUND_POST", "Listing", listing.Id, ct);
+=======
+>>>>>>> Stashed changes
 
         var latestReport = listing.ModerationReports
             .OrderByDescending(r => r.CreatedAt)
@@ -157,3 +173,7 @@ public sealed class ModerationService
         return Result.Ok();
     }
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes

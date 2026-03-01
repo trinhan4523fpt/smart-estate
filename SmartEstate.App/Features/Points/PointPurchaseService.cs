@@ -123,21 +123,6 @@ public sealed class PointPurchaseService
         if (!r.IsSuccess) return r;
 
         purchase.Status = PointPurchaseStatus.Completed;
-
-        var awaitings = await _db.Listings
-            .Where(x => !x.IsDeleted
-                && x.CreatedByUserId == purchase.UserId
-                && x.ModerationStatus == ModerationStatus.AwaitingPayment)
-            .OrderBy(x => x.CreatedAt)
-            .ToListAsync(ct);
-
-        foreach (var l in awaitings)
-        {
-            var spendPost = await _points.TrySpendAsync(purchase.UserId, 1, "SPEND_POST", "Listing", l.Id, ct);
-            if (!spendPost.IsSuccess) break;
-            l.Approve("Auto-approved after payment.");
-        }
-
         await _db.SaveChangesAsync(true, ct);
         return Result.Ok();
     }

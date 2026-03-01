@@ -93,14 +93,6 @@ public sealed class ModerationService
 
         if (listing is null) return Result.Fail(ErrorCodes.NotFound, "Listing not found.");
 
-        var spend = await _points.TrySpendAsync(listing.CreatedByUserId, 1, "SPEND_POST", "Listing", listing.Id, ct);
-        if (!spend.IsSuccess)
-        {
-            listing.AwaitPayment("Awaiting payment to publish.");
-            await _db.SaveChangesAsync(true, ct);
-            return Result.Fail(ErrorCodes.Validation, "AWAITING_PAYMENT");
-        }
-
         listing.Approve(reason);
 
         var latestReport = listing.ModerationReports
@@ -140,6 +132,8 @@ public sealed class ModerationService
         if (listing is null) return Result.Fail(ErrorCodes.NotFound, "Listing not found.");
 
         listing.Reject(reason.Trim());
+        // Hoàn điểm nếu bài đã chiếm điểm trước đó
+        await _points.AddPermanentAsync(listing.CreatedByUserId, 1, "REFUND_POST", "Listing", listing.Id, ct);
 
         var latestReport = listing.ModerationReports
             .OrderByDescending(r => r.CreatedAt)

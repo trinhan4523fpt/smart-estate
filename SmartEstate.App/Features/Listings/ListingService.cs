@@ -41,6 +41,10 @@ public sealed class ListingService
         var update = ToUpdate(req);
 
         var listing = Listing.Create(userId.Value, update);
+        // Trừ điểm trước khi nộp bài
+        var spend = await _points.TrySpendAsync(listing.CreatedByUserId, 1, "SPEND_POST", "Listing", listing.Id, ct);
+        if (!spend.IsSuccess)
+            return Result<ListingDetailResponse>.Fail(ErrorCodes.Validation, "INSUFFICIENT_POINTS");
 
         var mod = await _moderation.ModerateListingAsync(listing.Title, listing.Description, ct);
         listing.ApplyModerationDecision(mod.Decision, mod.QualityScore, mod.Reason, mod.FlagsJson);
@@ -52,14 +56,8 @@ public sealed class ListingService
             mod.Reason,
             mod.FlagsJson);
 
-        if (mod.Decision == "AUTO_APPROVE")
-        {
-            var spend = await _points.TrySpendAsync(listing.CreatedByUserId, 1, "SPEND_POST", "Listing", listing.Id, ct);
-            if (!spend.IsSuccess)
-            {
-                listing.AwaitPayment("Awaiting payment to publish.");
-            }
-        }
+        if (mod.Decision == "AUTO_REJECT")
+            await _points.AddPermanentAsync(listing.CreatedByUserId, 1, "REFUND_POST", "Listing", listing.Id, ct);
 
         _db.Listings.Add(listing);
         _db.ModerationReports.Add(report);

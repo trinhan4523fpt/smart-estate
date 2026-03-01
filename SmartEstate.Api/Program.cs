@@ -87,9 +87,6 @@ builder.Services.AddScoped<IPaymentGateway, DummyPaymentGateway>();
 // Jwt options
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));
 
-// Background jobs
-builder.Services.AddHostedService<SmartEstate.Api.Jobs.AwaitingPaymentCleanupService>();
-
 // JWT authentication
 var jwt = builder.Configuration.GetSection("Jwt").Get<JwtOptions>()!;
 var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));

@@ -131,12 +131,6 @@ public class Listing : AuditableEntity
         AiFlagsJson = flagsJson;
     }
 
-    public void AwaitPayment(string? reason = null)
-    {
-        ModerationStatus = ModerationStatus.AwaitingPayment;
-        ModerationReason = reason;
-    }
-
     // -------------------- Lifecycle state transitions --------------------
     public void MarkDone() => LifecycleStatus = ListingLifecycleStatus.Done;
 

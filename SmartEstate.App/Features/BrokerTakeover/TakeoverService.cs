@@ -68,6 +68,18 @@ public sealed class TakeoverService
             note: req.Note
         );
 
+        // Pre-charge 30 points for takeover
+        var spend = await _points.TrySpendAsync(
+            takeover.SellerUserId,
+            30,
+            "SPEND_TAKEOVER",
+            "TakeoverRequest",
+            takeover.Id,
+            ct);
+        if (!spend.IsSuccess)
+            return Result<TakeoverResponse>.Fail(ErrorCodes.Validation, "INSUFFICIENT_POINTS");
+        takeover.MarkFeePaid(_clock.UtcNow);
+
         _db.TakeoverRequests.Add(takeover);
         await _db.SaveChangesAsync(true, ct);
 
@@ -101,6 +113,8 @@ public sealed class TakeoverService
         if (!accept)
         {
             takeover.Reject(_clock.UtcNow);
+            // refund 30 points to seller
+            await _points.AddPermanentAsync(takeover.SellerUserId, 30, "REFUND_TAKEOVER", "TakeoverRequest", takeover.Id, ct);
             await _db.SaveChangesAsync(true, ct);
 
             return Result<TakeoverResponse>.Ok(new TakeoverResponse(
@@ -113,24 +127,6 @@ public sealed class TakeoverService
         // accept => domain transition
         takeover.Accept(_clock.UtcNow);
 
-        // seller pays -30 points (no negative)
-        var spend = await _points.TrySpendAsync(
-            takeover.SellerUserId,
-            30,
-            "SPEND_TAKEOVER",
-            "TakeoverRequest",
-            takeover.Id,
-            ct);
-
-        if (!spend.IsSuccess)
-        {
-            // rollback accept to pending if insufficient points
-            takeover.Reject(_clock.UtcNow);
-            await _db.SaveChangesAsync(true, ct);
-            return Result<TakeoverResponse>.Fail(ErrorCodes.Validation, "INSUFFICIENT_POINTS");
-        }
-
-        takeover.MarkFeePaid(_clock.UtcNow);
         // complete takeover and assign broker
         takeover.Complete(_clock.UtcNow);
 

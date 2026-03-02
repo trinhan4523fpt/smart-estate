@@ -1,8 +1,8 @@
-version: "3.9"
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: smartestate-sql
+    platform: linux/amd64
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=Your_password123
@@ -18,10 +18,12 @@ services:
       retries: 10
 
   api:
+    image: smartestate/api:dev
     build:
       context: .
       dockerfile: SmartEstate.Api/Dockerfile
     container_name: smartestate-api
+    platform: linux/amd64
     depends_on:
       sqlserver:
         condition: service_healthy

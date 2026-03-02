@@ -12,6 +12,7 @@ public class PointPackageConfiguration : IEntityTypeConfiguration<PointPackage>
         b.HasKey(x => x.Id);
 
         b.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        b.Property(x => x.PriceAmount).HasPrecision(18, 2);
         b.Property(x => x.PriceCurrency).HasMaxLength(8).IsRequired();
 
         b.HasIndex(x => x.IsActive);

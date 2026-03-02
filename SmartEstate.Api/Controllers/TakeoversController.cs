@@ -26,7 +26,7 @@ public sealed class TakeoversController : ControllerBase
     [ProducesResponseType(typeof(Guid), 200)]
     [ProducesResponseType(400)]
     [ProducesResponseType(403)]
-    public async Task<IActionResult> Request([FromBody] RequestTakeoverRequest req, CancellationToken ct)
+    public async Task<IActionResult> RequestTakeover([FromBody] RequestTakeoverRequest req, CancellationToken ct)
     {
         var isAdmin = User.IsInRole("Admin");
         var result = await _svc.RequestAsync(req, isAdmin, ct);

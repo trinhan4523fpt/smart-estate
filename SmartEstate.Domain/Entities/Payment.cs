@@ -16,7 +16,7 @@ public class Payment : AuditableEntity
     public Guid? PointPurchaseId { get; private set; }
 
     // Provider info (vnpay/momo/stripe/etc)
-    public string Provider { get; private set; }
+    public string Provider { get; private set; } = string.Empty;
     public string? ProviderRef { get; private set; }
     public string? PayUrl { get; private set; }
 

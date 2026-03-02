@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using SmartEstate.App.Common.Abstractions;
+using SmartEstate.Shared.Time;
 using SmartEstate.Domain.Entities;
 using SmartEstate.Infrastructure.Persistence;
 using SmartEstate.Shared.Errors;

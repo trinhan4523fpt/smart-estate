@@ -11,6 +11,7 @@ public class PointPurchaseConfiguration : IEntityTypeConfiguration<PointPurchase
         b.ToTable("point_purchases");
         b.HasKey(x => x.Id);
 
+        b.Property(x => x.PriceAmount).HasColumnType("decimal(18,2)");
         b.Property(x => x.PriceCurrency).HasMaxLength(8).IsRequired();
 
         b.HasOne(x => x.User)
@@ -33,4 +34,3 @@ public class PointPurchaseConfiguration : IEntityTypeConfiguration<PointPurchase
         b.HasIndex(x => x.IsDeleted);
     }
 }
-

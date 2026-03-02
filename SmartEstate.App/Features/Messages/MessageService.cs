@@ -119,25 +119,15 @@ public sealed class MessageService
             .OrderByDescending(x => x.LastMessageAt)
             .ToListAsync(ct);
 
-        var convIds = convs.Select(x => x.Id).ToList();
-        var readStates = await _db.ConversationReadStates
-            .AsNoTracking()
-            .Where(rs => convIds.Contains(rs.ConversationId) && rs.UserId == userId.Value)
-            .ToDictionaryAsync(rs => rs.ConversationId, ct);
+
 
         var dtos = convs.Select(x => {
             var isBuyer = x.BuyerUserId == userId.Value;
             var otherUser = isBuyer ? x.Listing.ResponsibleUser : x.BuyerUser;
-<<<<<<< Updated upstream
             var hasRead = x.LastMessageAt is null
                 || (isBuyer
                     ? (x.BuyerLastReadAt is not null && x.BuyerLastReadAt >= x.LastMessageAt)
                     : (x.ResponsibleLastReadAt is not null && x.ResponsibleLastReadAt >= x.LastMessageAt));
-=======
-            var hasRead = readStates.TryGetValue(x.Id, out var rs)
-                ? (x.LastMessageAt is null || (rs.LastReadAt is not null && rs.LastReadAt >= x.LastMessageAt))
-                : false;
->>>>>>> Stashed changes
             
             return new ConversationDto(
                 x.Id,
@@ -187,7 +177,6 @@ public sealed class MessageService
         var userId = _currentUser.UserId;
         if (userId is null) return Result.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
 
-<<<<<<< Updated upstream
         var conv = await _db.Conversations
             .Include(x => x.Listing)
             .FirstOrDefaultAsync(x => x.Id == conversationId, ct);
@@ -198,36 +187,6 @@ public sealed class MessageService
         var isSeller = conv.Listing.ResponsibleUserId == userId.Value;
         if (!isBuyer && !isSeller) return Result.Fail(ErrorCodes.Forbidden, "Not participant.");
         if (isBuyer) conv.BuyerLastReadAt = now; else conv.ResponsibleLastReadAt = now;
-=======
-        var conv = await _db.Conversations.FirstOrDefaultAsync(x => x.Id == conversationId, ct);
-        if (conv is null) return Result.Fail(ErrorCodes.NotFound, "Conversation not found.");
-
-        var lastMsg = await _db.Messages
-            .Where(x => x.ConversationId == conversationId)
-            .OrderByDescending(x => x.SentAt)
-            .FirstOrDefaultAsync(ct);
-
-        var now = _clock.UtcNow;
-        var rs = await _db.ConversationReadStates
-            .FirstOrDefaultAsync(x => x.ConversationId == conversationId && x.UserId == userId.Value, ct);
-
-        if (rs is null)
-        {
-            rs = new ConversationReadState
-            {
-                ConversationId = conversationId,
-                UserId = userId.Value,
-                LastReadMessageId = lastMsg?.Id,
-                LastReadAt = now
-            };
-            _db.ConversationReadStates.Add(rs);
-        }
-        else
-        {
-            rs.LastReadMessageId = lastMsg?.Id;
-            rs.LastReadAt = now;
-        }
->>>>>>> Stashed changes
 
         await _db.SaveChangesAsync(true, ct);
         return Result.Ok();

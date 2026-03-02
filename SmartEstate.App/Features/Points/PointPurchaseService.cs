@@ -2,19 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using SmartEstate.App.Common.Abstractions;
 using SmartEstate.App.Features.Points.Dtos;
 using SmartEstate.Domain.Entities;
-<<<<<<< Updated upstream
  
-=======
-using SmartEstate.Domain.Enums;
->>>>>>> Stashed changes
 using SmartEstate.Infrastructure.Persistence;
 using SmartEstate.Shared.Errors;
 using SmartEstate.Shared.Results;
 using SmartEstate.Shared.Time;
-<<<<<<< Updated upstream
 using SmartEstate.Domain.Enums;
-=======
->>>>>>> Stashed changes
 
 namespace SmartEstate.App.Features.Points;
 
@@ -122,11 +115,7 @@ public sealed class PointPurchaseService
         var r = await _points.AddPermanentAsync(
             purchase.UserId,
             purchase.Points,
-<<<<<<< Updated upstream
             "PURCHASE_POINTS",
-=======
-            "POINT_PURCHASE",
->>>>>>> Stashed changes
             "PointPurchase",
             purchase.Id,
             ct);
@@ -134,15 +123,9 @@ public sealed class PointPurchaseService
         if (!r.IsSuccess) return r;
 
         purchase.Status = PointPurchaseStatus.Completed;
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
         await _db.SaveChangesAsync(true, ct);
         return Result.Ok();
     }
 }
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes

@@ -12,13 +12,8 @@ public class PointLedgerEntry : AuditableEntity
     public bool IsMonthlyBucket { get; set; }
     public int BalanceMonthlyAfter { get; set; }
     public int BalancePermanentAfter { get; set; }
-<<<<<<< Updated upstream
     public string? Bucket { get; set; }
     public string? MonthKey { get; set; }
     public string? TxType { get; set; }
     public string? Note { get; set; }
 }
-=======
-}
-
->>>>>>> Stashed changes

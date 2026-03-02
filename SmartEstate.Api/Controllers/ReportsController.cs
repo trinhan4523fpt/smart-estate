@@ -6,6 +6,7 @@ using SmartEstate.Domain.Entities;
 using SmartEstate.Infrastructure.Persistence;
 using SmartEstate.Shared.Errors;
 using SmartEstate.Shared.Results;
+using SmartEstate.Shared.Time;
 
 namespace SmartEstate.Api.Controllers;
 

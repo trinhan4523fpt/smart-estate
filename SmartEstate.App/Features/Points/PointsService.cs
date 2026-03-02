@@ -70,14 +70,10 @@ public sealed class PointsService
             RefId = refId,
             IsMonthlyBucket = beforeMonthly > 0,
             BalanceMonthlyAfter = up.MonthlyPoints,
-<<<<<<< Updated upstream
             BalancePermanentAfter = up.PermanentPoints,
             Bucket = beforeMonthly > 0 ? "MONTHLY" : "PERMANENT",
             MonthKey = beforeMonthly > 0 ? monthKey : null,
             TxType = reason
-=======
-            BalancePermanentAfter = up.PermanentPoints
->>>>>>> Stashed changes
         };
 
         _db.PointLedgerEntries.Add(entry);
@@ -102,14 +98,10 @@ public sealed class PointsService
             RefId = refId,
             IsMonthlyBucket = false,
             BalanceMonthlyAfter = up.MonthlyPoints,
-<<<<<<< Updated upstream
             BalancePermanentAfter = up.PermanentPoints,
             Bucket = "PERMANENT",
             MonthKey = null,
             TxType = reason
-=======
-            BalancePermanentAfter = up.PermanentPoints
->>>>>>> Stashed changes
         };
 
         _db.PointLedgerEntries.Add(entry);
@@ -131,15 +123,11 @@ public sealed class PointsService
         var nextYear = month == 12 ? year + 1 : year;
         var monthEnd = new DateTimeOffset(nextYear, nextMonth, 1, 0, 0, 0, TimeSpan.Zero);
 
-<<<<<<< Updated upstream
         var users = await _db.Users
             .AsNoTracking()
             .Where(x => !x.IsDeleted && x.IsActive)
             .Join(_db.Roles.AsNoTracking(), u => u.RoleId, r => r.Id, (u, r) => new { u.Id, RoleName = r.Name })
             .ToListAsync(ct);
-=======
-        var users = await _db.Users.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive).Select(x => new { x.Id, x.Role }).ToListAsync(ct);
->>>>>>> Stashed changes
 
         foreach (var u in users)
         {
@@ -156,16 +144,10 @@ public sealed class PointsService
             }
 
             var amount = 0;
-<<<<<<< Updated upstream
             if (string.Equals(u.RoleName, "Broker", StringComparison.OrdinalIgnoreCase))
                 amount = 20;
             else if (string.Equals(u.RoleName, "User", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(u.RoleName, "Seller", StringComparison.OrdinalIgnoreCase))
-=======
-            if (u.Role == UserRole.Broker)
-                amount = 20;
-            else if (u.Role == UserRole.User || u.Role == UserRole.Seller)
->>>>>>> Stashed changes
                 amount = 3;
 
             if (amount <= 0) continue;
@@ -176,11 +158,7 @@ public sealed class PointsService
                 .AnyAsync(e =>
                     e.UserId == u.Id
                     && !e.IsDeleted
-<<<<<<< Updated upstream
                     && e.Reason == "GRANT_MONTHLY"
-=======
-                    && e.Reason == "MONTHLY_GRANT"
->>>>>>> Stashed changes
                     && e.CreatedAt >= monthStart
                     && e.CreatedAt < monthEnd, ct);
             if (granted) continue;
@@ -191,23 +169,15 @@ public sealed class PointsService
             {
                 UserId = u.Id,
                 Delta = amount,
-<<<<<<< Updated upstream
                 Reason = "GRANT_MONTHLY",
-=======
-                Reason = "MONTHLY_GRANT",
->>>>>>> Stashed changes
                 RefType = "MonthlyGrant",
                 RefId = null,
                 IsMonthlyBucket = true,
                 BalanceMonthlyAfter = up.MonthlyPoints,
-<<<<<<< Updated upstream
                 BalancePermanentAfter = up.PermanentPoints,
                 Bucket = "MONTHLY",
                 MonthKey = key,
                 TxType = "GRANT_MONTHLY"
-=======
-                BalancePermanentAfter = up.PermanentPoints
->>>>>>> Stashed changes
             };
 
             _db.PointLedgerEntries.Add(entry);

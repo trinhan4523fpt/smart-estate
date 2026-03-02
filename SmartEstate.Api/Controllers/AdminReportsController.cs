@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartEstate.App.Common.Abstractions;
 using SmartEstate.Infrastructure.Persistence;
 using SmartEstate.Shared.Errors;
+using SmartEstate.Shared.Time;
 
 namespace SmartEstate.Api.Controllers;
 

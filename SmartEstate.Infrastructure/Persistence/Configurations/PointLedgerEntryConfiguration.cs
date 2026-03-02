@@ -13,7 +13,6 @@ public class PointLedgerEntryConfiguration : IEntityTypeConfiguration<PointLedge
 
         b.Property(x => x.Reason).HasMaxLength(200).IsRequired();
         b.Property(x => x.RefType).HasMaxLength(50).IsRequired();
-<<<<<<< Updated upstream
         b.Property(x => x.Bucket).HasMaxLength(20);
         b.Property(x => x.MonthKey).HasMaxLength(7);
         b.Property(x => x.TxType).HasMaxLength(50);
@@ -26,12 +25,3 @@ public class PointLedgerEntryConfiguration : IEntityTypeConfiguration<PointLedge
         b.HasIndex(x => x.IsDeleted);
     }
 }
-=======
-
-        b.HasIndex(x => x.UserId);
-        b.HasIndex(x => new { x.UserId, x.CreatedAt });
-        b.HasIndex(x => x.IsDeleted);
-    }
-}
-
->>>>>>> Stashed changes

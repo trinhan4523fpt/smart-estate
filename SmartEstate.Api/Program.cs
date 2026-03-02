@@ -82,7 +82,7 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 // storage + AI moderation + payment gateway
 builder.Services.AddScoped<IFileStorage, LocalFileStorage>();
 builder.Services.AddScoped<IAiModerationService, DummyAiModerationService>();
-builder.Services.AddScoped<IPaymentGateway, DummyPaymentGateway>();
+builder.Services.AddScoped<IPaymentGateway, VnPayGateway>();
 
 // Jwt options
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("Jwt"));

@@ -1,0 +1,59 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: smartestate-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Your_Strong_Password_123!
+      - MSSQL_PID=Developer
+    ports:
+      - "14333:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Your_Strong_Password_123!' -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: always
+    networks:
+      - smartestate-network
+
+  api:
+    image: smartestate/api:latest
+    container_name: smartestate-api
+    build:
+      context: .
+      dockerfile: SmartEstate.Api/Dockerfile
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Server=sqlserver,1433;Database=SmartEstate;User ID=sa;Password=Your_Strong_Password_123!;Encrypt=True;TrustServerCertificate=True
+      - Jwt__Issuer=SmartEstate
+      - Jwt__Audience=SmartEstate
+      - Jwt__Key=THIS_IS_A_VERY_LONG_SECRET_KEY_FOR_JWT_SIGNING_AT_LEAST_32_CHARS
+      - Jwt__ExpiresMinutes=10080
+    ports:
+      - "8080:8080"
+      - "8081:8081" # Optional if you use https in container, but usually http is fine behind proxy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    restart: always
+    networks:
+      - smartestate-network
+
+volumes:
+  sql_data:
+
+networks:
+  smartestate-network:
+    driver: bridge

@@ -107,12 +107,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy
+                .AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+
 builder.Services.AddAuthorization();
+
 
 var app = builder.Build();
 
+
+app.UseCors("AllowAll");
+
 // Run database seeding in development / first run
-await app.EnsureSeedDataAsync();
+//await app.EnsureSeedDataAsync();
 
 // Serve static files from "uploads" folder
 app.UseStaticFiles(new StaticFileOptions

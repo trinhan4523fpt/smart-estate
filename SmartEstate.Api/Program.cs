@@ -129,7 +129,7 @@ var app = builder.Build();
 app.UseCors("AllowAll");
 
 // Run database seeding in development / first run
-//await app.EnsureSeedDataAsync();
+await app.EnsureSeedDataAsync();
 
 // Serve static files from "uploads" folder
 app.UseStaticFiles(new StaticFileOptions

@@ -1,0 +1,17 @@
+app = "smartestate-db"
+primary_region = "sin"
+
+[build]
+  image = "mcr.microsoft.com/mssql/server:2022-latest"
+
+[env]
+  ACCEPT_EULA = "Y"
+  SA_PASSWORD = "YourStrong@Passw0rd"
+
+[[services]]
+  internal_port = 1433
+  protocol = "tcp"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = 2048

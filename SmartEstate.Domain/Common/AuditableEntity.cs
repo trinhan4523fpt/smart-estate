@@ -1,6 +1,6 @@
-﻿namespace SmartEstate.Domain.Common;
+namespace SmartEstate.Domain.Common;
 
-public abstract class AuditableEntity : BaseEntity
+public abstract class AuditableEntity<TKey> : BaseEntity<TKey>
 {
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public Guid CreatedBy { get; set; }
@@ -11,4 +11,9 @@ public abstract class AuditableEntity : BaseEntity
     public bool IsDeleted { get; set; }
     public DateTimeOffset? DeletedAt { get; set; }
     public Guid? DeletedBy { get; set; }
+}
+
+public abstract class AuditableEntity : AuditableEntity<Guid>
+{
+    protected AuditableEntity() => Id = Guid.NewGuid();
 }

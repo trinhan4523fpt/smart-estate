@@ -37,9 +37,7 @@ public sealed class AuthService
         if (exists)
             return Result<AuthResponse>.Fail(ErrorCodes.Conflict, "Email already exists.");
 
-        var defaultRole = await _db.Roles.AsNoTracking().FirstOrDefaultAsync(x => x.Name == "User", ct);
-        if (defaultRole is null) return Result<AuthResponse>.Fail(ErrorCodes.Unexpected, "Role 'User' not found.");
-        var user = User.Create(email, req.DisplayName, defaultRole.Id);
+        var user = User.Create(email, req.DisplayName, UserRole.User);
 
         // domain set password hash
         user.SetPasswordHash(_hasher.Hash(req.Password));
@@ -47,9 +45,9 @@ public sealed class AuthService
         _db.Users.Add(user);
         await _db.SaveChangesAsync(true, ct);
 
-        var roleName = (await _db.Roles.AsNoTracking().FirstOrDefaultAsync(x => x.Id == user.RoleId, ct))?.Name ?? "User";
+        var roleName = user.Role.ToString();
         var token = _jwt.CreateToken(user.Id, user.Email, roleName);
-        return Result<AuthResponse>.Ok(new AuthResponse(user.Id, user.Email, roleName, token));
+        return Result<AuthResponse>.Ok(new AuthResponse(user.Id, user.Email, user.DisplayName, roleName, token));
     }
 
     public async Task<Result<AuthResponse>> LoginAsync(LoginRequest req, CancellationToken ct = default)
@@ -82,9 +80,9 @@ public sealed class AuthService
 
         await _db.SaveChangesAsync(true, ct);
 
-        var roleName = (await _db.Roles.AsNoTracking().FirstOrDefaultAsync(x => x.Id == user.RoleId, ct))?.Name ?? "User";
+        var roleName = user.Role.ToString();
         var token = _jwt.CreateToken(user.Id, user.Email, roleName);
-        return Result<AuthResponse>.Ok(new AuthResponse(user.Id, user.Email, roleName, token));
+        return Result<AuthResponse>.Ok(new AuthResponse(user.Id, user.Email, user.DisplayName, roleName, token));
     }
 
 
@@ -109,8 +107,7 @@ public sealed class AuthService
             return Result<ProfileResponse>.Fail(ErrorCodes.NotFound, "User not found.");
 
         // update basic profile via domain methods
-        user.UpdateDisplayName(req.DisplayName);
-        user.UpdatePhone(req.Phone);
+        user.UpdateProfile(req.DisplayName, req.Phone, req.Address, req.Avatar);
 
         // optional password change
         var wantsChangePassword =
@@ -125,7 +122,7 @@ public sealed class AuthService
             if (!_hasher.Verify(req.CurrentPassword, user.PasswordHash))
                 return Result<ProfileResponse>.Fail(ErrorCodes.Unauthorized, "Current password is incorrect.");
 
-            if (req.NewPassword.Length < 8)
+            if (req.NewPassword!.Length < 8)
                 return Result<ProfileResponse>.Fail(ErrorCodes.Validation, "New password must be at least 8 characters.");
 
             user.SetPasswordHash(_hasher.Hash(req.NewPassword));
@@ -136,15 +133,29 @@ public sealed class AuthService
         return Result<ProfileResponse>.Ok(ToProfile(user));
     }
 
+    public async Task<Result<List<ProfileResponse>>> GetUsersAsync(string? role, CancellationToken ct = default)
+    {
+        var q = _db.Users.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive);
+        
+        if (!string.IsNullOrWhiteSpace(role) && Enum.TryParse<UserRole>(role, true, out var r))
+        {
+            q = q.Where(x => x.Role == r);
+        }
+
+        var users = await q.ToListAsync(ct);
+        return Result<List<ProfileResponse>>.Ok(users.Select(ToProfile).ToList());
+    }
+
     private ProfileResponse ToProfile(User u)
     {
-        var roleName = _db.Roles.AsNoTracking().FirstOrDefault(x => x.Id == u.RoleId)?.Name ?? "User";
         return new ProfileResponse(
             u.Id,
             u.Email,
             u.DisplayName,
             u.Phone,
-            roleName,
+            u.Address,
+            u.Avatar,
+            u.Role.ToString(),
             u.IsActive,
             u.LastLoginAt
         );

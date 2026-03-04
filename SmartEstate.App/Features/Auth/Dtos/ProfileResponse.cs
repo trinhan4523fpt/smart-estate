@@ -5,6 +5,8 @@ public sealed record ProfileResponse(
     string Email,
     string DisplayName,
     string? Phone,
+    string? Address,
+    string? Avatar,
     string Role,
     bool IsActive,
     DateTimeOffset? LastLoginAt

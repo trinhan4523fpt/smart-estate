@@ -48,21 +48,24 @@ public sealed class MessageService
             return Result<Guid>.Ok(existing.Id);
         }
 
-        var conv = new Conversation
+        var conv = Conversation.Create(req.ListingId, userId.Value, listing.ResponsibleUserId);
+        
+        if (!string.IsNullOrWhiteSpace(req.InitialMessage))
         {
-            ListingId = req.ListingId,
-            BuyerUserId = userId.Value,
-            ResponsibleUserId = listing.ResponsibleUserId,
-            LastMessageAt = _clock.UtcNow,
-            LastMessagePreview = req.InitialMessage
-        };
+            conv.UpdateLastMessage(req.InitialMessage, _clock.UtcNow);
+        }
 
         _db.Conversations.Add(conv);
         await _db.SaveChangesAsync(true, ct);
 
         if (!string.IsNullOrWhiteSpace(req.InitialMessage))
         {
-             await SendMessageAsync(conv.Id, new SendMessageRequest(req.InitialMessage), ct);
+             // We can't call SendMessageAsync directly easily because we need to insert the message after conversation is saved, or add it to collection.
+             // But SendMessageAsync fetches conversation.
+             // Let's just create message here.
+             var msg = Message.Create(conv.Id, userId.Value, req.InitialMessage);
+             _db.Messages.Add(msg);
+             await _db.SaveChangesAsync(true, ct);
         }
 
         return Result<Guid>.Ok(conv.Id);
@@ -85,19 +88,11 @@ public sealed class MessageService
         if (!isBuyer && !isSeller)
             return Result<MessageDto>.Fail(ErrorCodes.Forbidden, "You are not a participant of this conversation.");
 
-        var msg = new Message
-        {
-            ConversationId = conversationId,
-            SenderUserId = userId.Value,
-            Content = req.Content,
-            SentAt = _clock.UtcNow,
-            IsRead = false
-        };
+        var msg = Message.Create(conversationId, userId.Value, req.Content);
 
         _db.Messages.Add(msg);
 
-        conv.LastMessageAt = msg.SentAt;
-        conv.LastMessagePreview = msg.Content.Length > 50 ? msg.Content.Substring(0, 50) + "..." : msg.Content;
+        conv.UpdateLastMessage(msg.Content.Length > 50 ? msg.Content.Substring(0, 50) + "..." : msg.Content, msg.SentAt);
 
         await _db.SaveChangesAsync(true, ct);
 
@@ -180,13 +175,24 @@ public sealed class MessageService
             .FirstOrDefaultAsync(x => x.Id == conversationId, ct);
         if (conv is null) return Result.Fail(ErrorCodes.NotFound, "Conversation not found.");
 
-        var now = _clock.UtcNow;
-        var isBuyer = conv.BuyerUserId == userId.Value;
-        var isSeller = conv.Listing.ResponsibleUserId == userId.Value;
-        if (!isBuyer && !isSeller) return Result.Fail(ErrorCodes.Forbidden, "Not participant.");
-        if (isBuyer) conv.BuyerLastReadAt = now; else conv.ResponsibleLastReadAt = now;
+        conv.MarkRead(userId.Value);
 
         await _db.SaveChangesAsync(true, ct);
         return Result.Ok();
+    }
+
+    public async Task<Result<int>> GetUnreadCountAsync(CancellationToken ct = default)
+    {
+        var userId = _currentUser.UserId;
+        if (userId is null) return Result<int>.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
+
+        var count = await _db.Conversations
+            .AsNoTracking()
+            .CountAsync(x => 
+                (x.BuyerUserId == userId.Value && (x.BuyerLastReadAt == null || x.BuyerLastReadAt < x.LastMessageAt)) ||
+                (x.ResponsibleUserId == userId.Value && (x.ResponsibleLastReadAt == null || x.ResponsibleLastReadAt < x.LastMessageAt)),
+                ct);
+
+        return Result<int>.Ok(count);
     }
 }

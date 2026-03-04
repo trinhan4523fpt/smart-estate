@@ -1,4 +1,4 @@
-﻿using SmartEstate.Shared.Errors;
+using SmartEstate.Shared.Errors;
 
 namespace SmartEstate.Shared.Results;
 
@@ -16,5 +16,5 @@ public sealed class Result<T> : Result
     public new static Result<T> Fail(string code, string message, IReadOnlyDictionary<string, object?>? meta = null)
         => new(false, default, new AppError(code, message, meta));
 
-    public static Result<T> Fail(AppError error) => new(false, default, error);
+    public new static Result<T> Fail(AppError error) => new(false, default, error);
 }

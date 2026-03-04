@@ -18,7 +18,7 @@ public sealed class AdminBrokerApplicationsController : ControllerBase
         _svc = svc;
     }
 
-    [HttpPost("{id:guid}/approve")]
+    [HttpPut("{id:guid}/approve")]
     [ProducesResponseType(200)]
     [ProducesResponseType(typeof(AppError), 400)]
     [ProducesResponseType(typeof(AppError), 401)]
@@ -29,7 +29,7 @@ public sealed class AdminBrokerApplicationsController : ControllerBase
         return ToActionResult(result);
     }
 
-    [HttpPost("{id:guid}/reject")]
+    [HttpPut("{id:guid}/reject")]
     [ProducesResponseType(200)]
     [ProducesResponseType(typeof(AppError), 400)]
     [ProducesResponseType(typeof(AppError), 401)]

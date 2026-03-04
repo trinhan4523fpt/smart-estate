@@ -1,11 +1,10 @@
-﻿﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartEstate.App.Features.Listings;
 using SmartEstate.App.Features.Listings.Dtos;
 using SmartEstate.Domain.Enums;
 using SmartEstate.Shared.Errors;
 using SmartEstate.Shared.Results;
-using SmartEstate.Shared.Time;
 
 namespace SmartEstate.Api.Controllers;
 
@@ -14,47 +13,38 @@ namespace SmartEstate.Api.Controllers;
 public sealed class ListingsController : ControllerBase
 {
     private readonly ListingService _svc;
-    private readonly ICurrentUser _currentUser;
 
-    public sealed class ListingUploadImageRequest
-    {
-        public IFormFile File { get; set; } = default!;
-        public int SortOrder { get; set; } = 0;
-        public string? Caption { get; set; }
-    }
-    public ListingsController(ListingService svc, ICurrentUser currentUser)
+    public ListingsController(ListingService svc)
     {
         _svc = svc;
-        _currentUser = currentUser;
     }
 
-    // Create listing: User/Broker/Admin
-    /// <summary>
-    /// Create a new property listing.
-    /// </summary>
-    /// <response code="201">Listing created successfully.</response>
-    /// <response code="400">Validation failed.</response>
-    /// <response code="403">User is not Seller or Broker.</response>
+    [HttpGet("/api/users/me/listings")]
+    [Authorize]
+    public async Task<IActionResult> GetMyListings(CancellationToken ct)
+    {
+        var result = await _svc.GetMyListingsAsync(ct);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("/api/admin/listings")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAdminListings(CancellationToken ct)
+    {
+        var result = await _svc.GetAdminListingsAsync(ct);
+        return ToActionResult(result);
+    }
+
     [HttpPost]
-    [Authorize(Roles = "User,Broker,Admin")]
-    [ProducesResponseType(typeof(Guid), 201)]
-    [ProducesResponseType(400)]
-    [ProducesResponseType(403)]
+    [Authorize(Roles = "Seller,Broker,Admin")]
     public async Task<IActionResult> Create([FromBody] CreateListingRequest req, CancellationToken ct)
     {
         var result = await _svc.CreateAsync(req, ct);
         return ToActionResult(result, created: true);
     }
 
-    // Update listing: responsible or admin
-    /// <summary>
-    /// Update an existing listing.
-    /// </summary>
-    [HttpPut("{id:guid}")]
-    [Authorize(Roles = "User,Broker,Admin")]
-    [ProducesResponseType(typeof(Guid), 200)]
-    [ProducesResponseType(403)]
-    [ProducesResponseType(404)]
+    [HttpPatch("{id:guid}")]
+    [Authorize(Roles = "Seller,Broker,Admin")]
     public async Task<IActionResult> Update([FromRoute] Guid id, [FromBody] UpdateListingRequest req, CancellationToken ct)
     {
         var isAdmin = User.IsInRole("Admin");
@@ -62,37 +52,34 @@ public sealed class ListingsController : ControllerBase
         return ToActionResult(result);
     }
 
-    // Get listing detail:
-    // - public only: APPROVED + ACTIVE
-    // - owner/admin can view non-public
-    /// <summary>
-    /// Get listing details.
-    /// </summary>
-    /// <remarks>
-    /// Public users can only see APPROVED and ACTIVE listings.
-    /// Phone number is masked unless "Get Contact" API is used.
-    /// </remarks>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Seller,Broker,Admin")]
+    public async Task<IActionResult> Delete([FromRoute] Guid id, CancellationToken ct)
+    {
+        var isAdmin = User.IsInRole("Admin");
+        var result = await _svc.DeleteAsync(id, isAdmin, ct);
+        if (!result.IsSuccess) return ToActionResult(result);
+        return NoContent();
+    }
+
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
-    [ProducesResponseType(typeof(SmartEstate.App.Features.Listings.Dtos.ListingDetailResponse), 200)]
-    [ProducesResponseType(404)]
     public async Task<IActionResult> GetDetail([FromRoute] Guid id, CancellationToken ct)
     {
-        var viewerId = _currentUser.UserId;
         var isAdmin = User?.Identity?.IsAuthenticated == true && User.IsInRole("Admin");
+        Guid? viewerId = null;
+        if (User?.Identity?.IsAuthenticated == true)
+        {
+             var sub = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+             if (Guid.TryParse(sub, out var g)) viewerId = g;
+        }
+
         var result = await _svc.GetDetailAsync(id, viewerId, isAdmin, ct);
         return ToActionResult(result);
     }
 
-    // Get contact info (real phone) - require login
-    /// <summary>
-    /// Reveal the contact phone number of the listing owner.
-    /// </summary>
-    /// <remarks>Requires authentication.</remarks>
     [HttpPost("{id:guid}/contact")]
     [Authorize]
-    [ProducesResponseType(typeof(object), 200)]
-    [ProducesResponseType(401)]
     public async Task<IActionResult> GetContact([FromRoute] Guid id, CancellationToken ct)
     {
         var result = await _svc.GetContactAsync(id, ct);
@@ -100,72 +87,70 @@ public sealed class ListingsController : ControllerBase
         return Ok(new { Phone = result.Value });
     }
 
-    // Update lifecycle: responsible or admin
-    [HttpPatch("{id:guid}/lifecycle")]
-    [Authorize(Roles = "User,Broker,Admin")]
-    public async Task<IActionResult> UpdateLifecycle([FromRoute] Guid id, [FromBody] UpdateLifecycleRequest req, CancellationToken ct)
+    [HttpPatch("{id:guid}/submit")]
+    [HttpPost("{id:guid}/submit")]
+    [Authorize(Roles = "Seller,Broker,Admin")]
+    public async Task<IActionResult> Submit([FromRoute] Guid id, CancellationToken ct)
     {
         var isAdmin = User.IsInRole("Admin");
-        var result = await _svc.UpdateLifecycleAsync(id, req.Status, isAdmin, ct);
+        var result = await _svc.SubmitAsync(id, isAdmin, ct);
+        if (!result.IsSuccess) return ToActionResult(result);
+        
+        return await GetDetail(id, ct);
+    }
+
+    [HttpPatch("{id:guid}/done")]
+    [HttpPost("{id:guid}/done")]
+    [Authorize(Roles = "Seller,Broker,Admin")]
+    public async Task<IActionResult> Done([FromRoute] Guid id, CancellationToken ct)
+    {
+        var isAdmin = User.IsInRole("Admin");
+        var result = await _svc.UpdateLifecycleAsync(id, ListingLifecycleStatus.Done, isAdmin, ct);
+        if (!result.IsSuccess) return ToActionResult(result);
+        return await GetDetail(id, ct);
+    }
+
+    [HttpPatch("{id:guid}/cancel")]
+    [HttpPost("{id:guid}/cancel")]
+    [Authorize(Roles = "Seller,Broker,Admin")]
+    public async Task<IActionResult> Cancel([FromRoute] Guid id, CancellationToken ct)
+    {
+        var isAdmin = User.IsInRole("Admin");
+        var result = await _svc.UpdateLifecycleAsync(id, ListingLifecycleStatus.Cancelled, isAdmin, ct);
+        if (!result.IsSuccess) return ToActionResult(result);
+        return await GetDetail(id, ct);
+    }
+
+    [HttpPost("{id:guid}/report")]
+    [Authorize]
+    public async Task<IActionResult> Report([FromRoute] Guid id, [FromBody] ReportListingRequest req, CancellationToken ct)
+    {
+        var result = await _svc.ReportAsync(id, req.Reason, req.Note, ct);
         return ToActionResult(result);
     }
 
-    // Upload image: multipart/form-data
-    [HttpPost("{id:guid}/images")]
-    [Authorize(Roles = "User,Broker,Admin")]
-    [RequestSizeLimit(25_000_000)]
-    [Consumes("multipart/form-data")]
-    public async Task<IActionResult> UploadImage(
-    [FromRoute] Guid id,
-    [FromForm] ListingUploadImageRequest req,
-    CancellationToken ct = default)
+    private IActionResult ToActionResult(Result result)
     {
-        if (req.File is null || req.File.Length == 0)
-            return BadRequest(new AppError(ErrorCodes.Validation, "File is required."));
-
-        var isAdmin = User.IsInRole("Admin");
-
-        await using var stream = req.File.OpenReadStream();
-        var result = await _svc.UploadImageAsync(
-            listingId: id,
-            content: stream,
-            fileName: req.File.FileName,
-            contentType: req.File.ContentType,
-            sortOrder: req.SortOrder,
-            caption: req.Caption,
-            isAdmin: isAdmin,
-            ct: ct);
-
-        return ToActionResult(result);
-    }
-
-    private IActionResult ToActionResult(Result result, bool created = false)
-    {
-        if (result.IsSuccess) return created ? StatusCode(201) : Ok();
-
-        return result.Error?.Code switch
-        {
-            ErrorCodes.Validation => BadRequest(result.Error),
-            ErrorCodes.Unauthorized => Unauthorized(result.Error),
-            ErrorCodes.Forbidden => Forbid(),
-            ErrorCodes.NotFound => NotFound(result.Error),
-            ErrorCodes.Conflict => Conflict(result.Error),
-            _ => StatusCode(500, result.Error ?? new AppError(ErrorCodes.Unexpected, "Unexpected error"))
-        };
+        if (result.IsSuccess) return Ok();
+        return ErrorResult(result.Error);
     }
 
     private IActionResult ToActionResult<T>(Result<T> result, bool created = false)
     {
         if (result.IsSuccess) return created ? StatusCode(201, result.Value) : Ok(result.Value);
+        return ErrorResult(result.Error);
+    }
 
-        return result.Error?.Code switch
+    private IActionResult ErrorResult(SmartEstate.Shared.Errors.AppError? error)
+    {
+        return error?.Code switch
         {
-            ErrorCodes.Validation => BadRequest(result.Error),
-            ErrorCodes.Unauthorized => Unauthorized(result.Error),
-            ErrorCodes.Forbidden => StatusCode(403, result.Error),
-            ErrorCodes.NotFound => StatusCode(404, result.Error),
-            ErrorCodes.Conflict => StatusCode(409, result.Error),
-            _ => StatusCode(500, result.Error ?? new AppError(ErrorCodes.Unexpected, "Unexpected error"))
+            ErrorCodes.Validation => BadRequest(error),
+            ErrorCodes.Unauthorized => Unauthorized(error),
+            ErrorCodes.Forbidden => Forbid(),
+            ErrorCodes.NotFound => NotFound(error),
+            ErrorCodes.Conflict => Conflict(error),
+            _ => StatusCode(500, error ?? new AppError(ErrorCodes.Unexpected, "Unexpected error"))
         };
     }
 }

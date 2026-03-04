@@ -16,23 +16,19 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         b.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
         b.Property(x => x.DisplayName).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Phone).HasMaxLength(50);
+        b.Property(x => x.Phone).HasMaxLength(20);
+        b.Property(x => x.Avatar).HasMaxLength(1000);
+        b.Property(x => x.Address).HasMaxLength(500);
 
-        b.Property(x => x.RoleId).IsRequired();
-        b.HasOne(x => x.Role)
-            .WithMany()
-            .HasForeignKey(x => x.RoleId)
-            .OnDelete(DeleteBehavior.Restrict);
+        b.Property(x => x.Role)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .IsRequired();
+            
         b.Property(x => x.IsActive).IsRequired();
 
         // soft delete
         b.HasIndex(x => x.IsDeleted);
-
-        // 1-1 broker profile
-        b.HasOne(x => x.BrokerProfile)
-            .WithOne(x => x.User)
-            .HasForeignKey<BrokerProfile>(x => x.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // created listings
         b.HasMany(x => x.CreatedListings)

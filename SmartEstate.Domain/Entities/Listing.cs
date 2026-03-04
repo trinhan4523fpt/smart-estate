@@ -1,6 +1,5 @@
 using SmartEstate.Domain.Common;
 using SmartEstate.Domain.Enums;
-using SmartEstate.Domain.ValueObjects;
 
 namespace SmartEstate.Domain.Entities;
 
@@ -11,26 +10,38 @@ public class Listing : AuditableEntity
     public string Description { get; private set; } = default!;
 
     public PropertyType PropertyType { get; private set; }
+    public TransactionType TransactionType { get; private set; }
 
-    public Money Price { get; private set; } = new Money(0);
+    public decimal Price { get; private set; } // VND
 
     public double? AreaM2 { get; private set; }
     public int? Bedrooms { get; private set; }
     public int? Bathrooms { get; private set; }
 
-    public AddressParts Address { get; private set; } = new AddressParts(null, null, null, null, null);
-    public GeoPoint? Location { get; private set; }
+    public string? City { get; private set; }
+    public string? District { get; private set; }
+    public string? Address { get; private set; }
+
+    public decimal? Lat { get; private set; }
+    public decimal? Lng { get; private set; }
 
     public string? VirtualTourUrl { get; private set; }
+    
+    // -------------------- Seller Info --------------------
+    public string? SellerName { get; private set; }
+    public string? SellerPhone { get; private set; }
+    public bool IsBrokerManaged { get; private set; }
 
     // -------------------- Moderation --------------------
-    public ModerationStatus ModerationStatus { get; private set; } = ModerationStatus.NeedReview;
+    public ModerationStatus ModerationStatus { get; private set; } = ModerationStatus.PendingReview;
     public string? ModerationReason { get; private set; }
-    public decimal? QualityScore { get; set; }              // can be set by domain method
-    public string? AiFlagsJson { get; set; }                // can be set by domain method
+    public decimal? QualityScore { get; set; }
+    public string? AiFlagsJson { get; set; }
 
     // -------------------- Lifecycle --------------------
     public ListingLifecycleStatus LifecycleStatus { get; private set; } = ListingLifecycleStatus.Active;
+    public DateTimeOffset? ApprovedAt { get; private set; }
+    public DateTimeOffset? CompletedAt { get; private set; }
 
     // -------------------- Ownership --------------------
     public Guid CreatedByUserId { get; set; }
@@ -45,7 +56,7 @@ public class Listing : AuditableEntity
     public ICollection<ListingImage> Images { get; set; } = new List<ListingImage>();
     public ICollection<ListingReport> Reports { get; set; } = new List<ListingReport>();
     public ICollection<ModerationReport> ModerationReports { get; set; } = new List<ModerationReport>();
-    public ICollection<TakeoverRequest> TakeoverRequests { get; set; } = new List<TakeoverRequest>();
+    public ICollection<BrokerRequest> BrokerRequests { get; set; } = new List<BrokerRequest>();
     public ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
     public ICollection<UserListingFavorite> FavoritedByUsers { get; set; } = new List<UserListingFavorite>();
 
@@ -56,7 +67,8 @@ public class Listing : AuditableEntity
         var l = new Listing
         {
             CreatedByUserId = ownerUserId,
-            ResponsibleUserId = ownerUserId
+            ResponsibleUserId = ownerUserId,
+            IsBrokerManaged = false
         };
 
         l.Activate();
@@ -71,32 +83,38 @@ public class Listing : AuditableEntity
     {
         Guards.AgainstNullOrEmpty(u.Title, "title");
         Guards.AgainstNullOrEmpty(u.Description, "description");
-        if (u.PriceAmount < 0) throw new DomainException("price must be >= 0.");
+        if (u.Price < 0) throw new DomainException("price must be >= 0.");
 
         Title = u.Title.Trim();
         Description = u.Description.Trim();
         PropertyType = u.PropertyType;
+        TransactionType = u.TransactionType;
 
-        Price = new Money(u.PriceAmount, u.PriceCurrency);
+        Price = u.Price;
 
         AreaM2 = u.AreaM2;
         Bedrooms = u.Bedrooms;
         Bathrooms = u.Bathrooms;
 
-        Address = new AddressParts(u.FullAddress, u.City, u.District, u.Ward, u.Street);
+        City = u.City?.Trim();
+        District = u.District?.Trim();
+        Address = u.Address?.Trim();
 
-        Location = (u.Lat is not null && u.Lng is not null)
-            ? new GeoPoint(u.Lat.Value, u.Lng.Value)
-            : null;
+        Lat = u.Lat;
+        Lng = u.Lng;
 
         VirtualTourUrl = u.VirtualTourUrl?.Trim();
+        
+        if (u.SellerName != null) SellerName = u.SellerName.Trim();
+        if (u.SellerPhone != null) SellerPhone = u.SellerPhone.Trim();
     }
 
     // -------------------- Moderation state transitions --------------------
-    public void Approve(string? reason = null)
+    public void Approve(string? reason = null, DateTimeOffset? at = null)
     {
         ModerationStatus = ModerationStatus.Approved;
         ModerationReason = reason;
+        ApprovedAt = at ?? DateTimeOffset.UtcNow;
     }
 
     public void Reject(string reason)
@@ -108,7 +126,7 @@ public class Listing : AuditableEntity
 
     public void NeedReview(string? reason = null)
     {
-        ModerationStatus = ModerationStatus.NeedReview;
+        ModerationStatus = ModerationStatus.PendingReview;
         ModerationReason = reason;
     }
 
@@ -132,7 +150,11 @@ public class Listing : AuditableEntity
     }
 
     // -------------------- Lifecycle state transitions --------------------
-    public void MarkDone() => LifecycleStatus = ListingLifecycleStatus.Done;
+    public void MarkDone(DateTimeOffset? at = null)
+    {
+        LifecycleStatus = ListingLifecycleStatus.Done;
+        CompletedAt = at ?? DateTimeOffset.UtcNow;
+    }
 
     public void Cancel() => LifecycleStatus = ListingLifecycleStatus.Cancelled;
 
@@ -157,10 +179,17 @@ public class Listing : AuditableEntity
     }
 
     // -------------------- Assignment --------------------
-    public void AssignBroker(Guid brokerUserId) { AssignedBrokerUserId = brokerUserId; ResponsibleUserId = brokerUserId; }
+    public void AssignBroker(Guid brokerUserId) 
+    { 
+        AssignedBrokerUserId = brokerUserId; 
+        ResponsibleUserId = brokerUserId; 
+        IsBrokerManaged = true;
+    }
+    
     public void UnassignBroker()
     {
         AssignedBrokerUserId = null;
         ResponsibleUserId = CreatedByUserId;
+        IsBrokerManaged = false;
     }
 }

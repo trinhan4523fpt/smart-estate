@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
+using SmartEstate.App.Common.Abstractions;
 using SmartEstate.Shared.Time;
 
 namespace SmartEstate.Api.Security;

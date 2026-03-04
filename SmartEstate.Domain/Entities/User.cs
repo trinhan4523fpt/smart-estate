@@ -1,4 +1,5 @@
 using SmartEstate.Domain.Common;
+using SmartEstate.Domain.Enums;
 
 namespace SmartEstate.Domain.Entities;
 
@@ -8,16 +9,15 @@ public class User : AuditableEntity
     public string PasswordHash { get; private set; } = default!;
     public string DisplayName { get; private set; } = default!;
     public string? Phone { get; private set; }
+    public string? Avatar { get; private set; }
+    public string? Address { get; private set; }
 
-    public short RoleId { get; private set; }
-    public Role Role { get; set; } = default!;
+    public UserRole Role { get; private set; } = UserRole.User;
 
     public bool IsActive { get; private set; } = true;
     public DateTimeOffset? LastLoginAt { get; private set; }
 
     // Navigation
-    public BrokerProfile? BrokerProfile { get; set; }
-
     public ICollection<Listing> CreatedListings { get; set; } = new List<Listing>();
     public ICollection<Listing> ResponsibleListings { get; set; } = new List<Listing>();
 
@@ -27,7 +27,7 @@ public class User : AuditableEntity
 
 
     // -------------------- Factory --------------------
-    public static User Create(string email, string displayName, short roleId)
+    public static User Create(string email, string displayName, UserRole role)
     {
         Guards.AgainstNullOrEmpty(email, "email");
         Guards.AgainstNullOrEmpty(displayName, "displayName");
@@ -36,7 +36,7 @@ public class User : AuditableEntity
         {
             Email = email.Trim().ToLowerInvariant(),
             DisplayName = displayName.Trim(),
-            RoleId = roleId,
+            Role = role,
             IsActive = true
         };
     }
@@ -48,20 +48,17 @@ public class User : AuditableEntity
         PasswordHash = passwordHash;
     }
 
-    public void UpdateDisplayName(string displayName)
+    public void UpdateProfile(string? displayName, string? phone, string? address, string? avatar)
     {
-        Guards.AgainstNullOrEmpty(displayName, "displayName");
-        DisplayName = displayName.Trim();
-    }
-
-    public void UpdatePhone(string? phone)
-    {
+        if (!string.IsNullOrWhiteSpace(displayName)) DisplayName = displayName.Trim();
         Phone = string.IsNullOrWhiteSpace(phone) ? null : phone.Trim();
+        Address = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
+        Avatar = string.IsNullOrWhiteSpace(avatar) ? null : avatar.Trim();
     }
 
-    public void SetRoleId(short roleId)
+    public void SetRole(UserRole role)
     {
-        RoleId = roleId;
+        Role = role;
     }
 
     public void Activate() => IsActive = true;

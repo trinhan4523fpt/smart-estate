@@ -1,79 +1,54 @@
 using SmartEstate.Domain.Common;
 using SmartEstate.Domain.Enums;
-using SmartEstate.Domain.ValueObjects;
 
 namespace SmartEstate.Domain.Entities;
 
 public class Payment : AuditableEntity
 {
-    public PaymentType Type { get; private set; }
-    public PaymentStatus Status { get; private set; } = PaymentStatus.Pending;
-
-    public Money Amount { get; private set; } = new Money(0);
     public Guid PayerUserId { get; private set; }
-    public Guid? ListingId { get; private set; }
-    public Guid? TakeoverRequestId { get; private set; }
-    public Guid? PointPurchaseId { get; private set; }
+    public decimal Amount { get; private set; }
+    public string Currency { get; private set; } = "VND";
 
-    // Provider info (vnpay/momo/stripe/etc)
-    public string Provider { get; private set; }
+    public FeeType FeeType { get; private set; }
+    public RefType RefType { get; private set; }
+    public Guid? RefId { get; private set; }
+
+    public PaymentStatus Status { get; private set; } = PaymentStatus.Pending;
+    public string? Description { get; private set; }
+    public DateTimeOffset? PaidAt { get; private set; }
+    
+    // Additional fields not in guide but useful for implementation
+    public string? Provider { get; private set; }
     public string? ProviderRef { get; private set; }
     public string? PayUrl { get; private set; }
-
-    // raw payload (webhook/debug)
     public string? RawPayloadJson { get; private set; }
-    public DateTimeOffset? PaidAt { get; private set; }
 
-    public static Payment CreateTakeoverFee(
+    public static Payment Create(
         Guid payerUserId,
-        Guid listingId,
-        Guid takeoverRequestId,
         decimal amount,
         string currency,
-        string provider,
-        string? providerRef,
-        string? payUrl)
+        FeeType feeType,
+        RefType refType,
+        Guid? refId,
+        string? description,
+        string? provider = null,
+        string? payUrl = null)
     {
         if (amount < 0) throw new DomainException("payment amount must be >= 0");
 
-        var p = new Payment
+        return new Payment
         {
-            Type = PaymentType.TakeoverFee,
-            Status = PaymentStatus.Pending,
             PayerUserId = payerUserId,
-            ListingId = listingId,
-            TakeoverRequestId = takeoverRequestId,
-            Amount = new Money(amount, currency),
+            Amount = amount,
+            Currency = currency ?? "VND",
+            FeeType = feeType,
+            RefType = refType,
+            RefId = refId,
+            Description = description,
+            Status = PaymentStatus.Pending,
             Provider = provider,
-            ProviderRef = providerRef,
             PayUrl = payUrl
         };
-        return p;
-    }
-
-    public static Payment CreatePointPurchasePayment(
-        Guid payerUserId,
-        Guid pointPurchaseId,
-        decimal amount,
-        string currency,
-        string provider,
-        string? providerRef,
-        string? payUrl)
-    {
-        if (amount < 0) throw new DomainException("payment amount must be >= 0");
-
-        var p = new Payment
-        {
-            Type = PaymentType.Other,
-            Status = PaymentStatus.Pending,
-            PayerUserId = payerUserId,
-            PointPurchaseId = pointPurchaseId,
-            Amount = new Money(amount, currency),
-            Provider = provider,
-            ProviderRef = providerRef,
-            PayUrl = payUrl
-        };
-        return p;
     }
 
     public void MarkPaid(string? rawPayloadJson = null)

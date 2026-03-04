@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartEstate.Domain.Entities;
 
@@ -11,71 +11,84 @@ public class ListingConfiguration : IEntityTypeConfiguration<Listing>
         b.ToTable("listings");
         b.HasKey(x => x.Id);
 
-        b.Property(x => x.Title).HasMaxLength(200).IsRequired();
-        b.Property(x => x.Description).HasMaxLength(5000).IsRequired();
+        b.Property(x => x.Title).HasMaxLength(500).IsRequired();
+        b.Property(x => x.Description).IsRequired(); // TEXT
 
-        b.Property(x => x.PropertyType).IsRequired();
+        b.Property(x => x.PropertyType)
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
-        // Money (owned)
-        b.OwnsOne(x => x.Price, m =>
-        {
-            m.Property(p => p.Amount).HasColumnName("price_amount").HasColumnType("decimal(18,2)").IsRequired();
-            m.Property(p => p.Currency).HasColumnName("price_currency").HasMaxLength(10).IsRequired();
+        b.Property(x => x.TransactionType)
+            .HasConversion<string>()
+            .HasMaxLength(10);
 
-            m.HasIndex(p => p.Amount);
+        b.Property(x => x.Price)
+            .HasColumnType("numeric(18,0)")
+            .IsRequired();
 
-        });
+        // Address
+        b.Property(x => x.City).HasMaxLength(100);
+        b.Property(x => x.District).HasMaxLength(100);
+        b.Property(x => x.Address); // TEXT
 
-        b.Property(x => x.AreaM2);
-        b.Property(x => x.Bedrooms);
-        b.Property(x => x.Bathrooms);
+        // Coordinates
+        b.Property(x => x.Lat).HasColumnType("decimal(10,8)");
+        b.Property(x => x.Lng).HasColumnType("decimal(11,8)");
 
-        // AddressParts (owned)
-        b.OwnsOne(x => x.Address, a =>
-        {
-            a.Property(p => p.FullAddress).HasColumnName("addr_full").HasMaxLength(500);
-            a.Property(p => p.City).HasColumnName("addr_city").HasMaxLength(100);
-            a.Property(p => p.District).HasColumnName("addr_district").HasMaxLength(100);
-            a.Property(p => p.Ward).HasColumnName("addr_ward").HasMaxLength(100);
-            a.Property(p => p.Street).HasColumnName("addr_street").HasMaxLength(200);
+        // Seller Info
+        b.Property(x => x.SellerName).HasMaxLength(255);
+        b.Property(x => x.SellerPhone).HasMaxLength(20);
 
-            a.HasIndex(p => p.City);
-            a.HasIndex(p => p.District);
-        });
+        // Enums as strings
+        b.Property(x => x.ModerationStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
-        // GeoPoint (owned, optional)
-        b.OwnsOne(x => x.Location, g =>
-        {
-            g.Property(p => p.Lat).HasColumnName("lat").HasColumnType("float");
-            g.Property(p => p.Lng).HasColumnName("lng").HasColumnType("float");
+        b.Property(x => x.LifecycleStatus)
+            .HasConversion<string>()
+            .HasMaxLength(20);
 
-            g.HasIndex(p => p.Lat);
-            g.HasIndex(p => p.Lng);
-        });
-        b.Navigation(x => x.Location).IsRequired(false);
+        // JSON columns for moderation
+        b.Property(x => x.AiFlagsJson);
 
-        b.Property(x => x.VirtualTourUrl).HasMaxLength(2000);
+        // Relationships
+        b.HasOne(x => x.CreatedByUser)
+            .WithMany(u => u.CreatedListings)
+            .HasForeignKey(x => x.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        b.Property(x => x.ModerationStatus).IsRequired();
-        b.Property(x => x.ModerationReason).HasMaxLength(1000);
-        b.Property(x => x.QualityScore).HasColumnType("decimal(5,2)");
-        b.Property(x => x.AiFlagsJson).HasColumnType("nvarchar(max)");
-
-        b.Property(x => x.LifecycleStatus).IsRequired();
-
-        b.Property(x => x.CreatedByUserId).IsRequired();
-        b.Property(x => x.ResponsibleUserId).IsRequired();
-        b.Property(x => x.AssignedBrokerUserId);
+        b.HasOne(x => x.ResponsibleUser)
+            .WithMany(u => u.ResponsibleListings)
+            .HasForeignKey(x => x.ResponsibleUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         b.HasOne(x => x.AssignedBrokerUser)
             .WithMany()
             .HasForeignKey(x => x.AssignedBrokerUserId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.SetNull);
 
-        // indexes for common queries (search)
-        b.HasIndex(x => new { x.ModerationStatus, x.LifecycleStatus });
-        b.HasIndex(x => x.ResponsibleUserId);
-
-        b.HasIndex(x => x.IsDeleted);
+        b.HasMany(x => x.BrokerRequests)
+            .WithOne(br => br.Listing)
+            .HasForeignKey(br => br.ListingId);
+            
+        b.HasMany(x => x.Conversations)
+            .WithOne(c => c.Listing)
+            .HasForeignKey(c => c.ListingId);
+            
+        b.HasMany(x => x.FavoritedByUsers)
+            .WithOne(f => f.Listing)
+            .HasForeignKey(f => f.ListingId);
+            
+        b.HasMany(x => x.Reports)
+            .WithOne(r => r.Listing)
+            .HasForeignKey(r => r.ListingId);
+            
+        b.HasMany(x => x.ModerationReports)
+            .WithOne(mr => mr.Listing)
+            .HasForeignKey(mr => mr.ListingId);
+            
+        b.HasMany(x => x.Images)
+            .WithOne(i => i.Listing)
+            .HasForeignKey(i => i.ListingId);
     }
 }

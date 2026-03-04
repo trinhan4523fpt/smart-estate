@@ -37,18 +37,20 @@ public sealed class ModerationController : ControllerBase
         public string Reason { get; set; } = default!;
     }
 
-    [HttpPost("listings/{id:guid}/approve")]
+   
+    [HttpPut("/api/admin/listings/{id:guid}/approve")]
     [ProducesResponseType(200)]
     [ProducesResponseType(typeof(AppError), 400)]
     [ProducesResponseType(typeof(AppError), 401)]
     [ProducesResponseType(typeof(AppError), 404)]
-    public async Task<IActionResult> ApproveListing([FromRoute] Guid id, [FromBody] ApproveListingRequest req, CancellationToken ct)
+    public async Task<IActionResult> ApproveListing([FromRoute] Guid id, CancellationToken ct)
     {
-        var result = await _svc.ApproveAsync(id, req.Reason, ct);
+        var result = await _svc.ApproveAsync(id, ct);
         return ToActionResult(result);
     }
 
-    [HttpPost("listings/{id:guid}/reject")]
+ 
+    [HttpPut("/api/admin/listings/{id:guid}/reject")]
     [ProducesResponseType(200)]
     [ProducesResponseType(typeof(AppError), 400)]
     [ProducesResponseType(typeof(AppError), 401)]

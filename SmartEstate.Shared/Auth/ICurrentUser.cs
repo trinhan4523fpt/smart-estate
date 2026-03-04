@@ -1,4 +1,4 @@
-﻿namespace SmartEstate.Shared.Time;
+namespace SmartEstate.App.Common.Abstractions;
 
 public interface ICurrentUser
 {

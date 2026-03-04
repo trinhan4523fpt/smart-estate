@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SmartEstate.Domain.Common;
 using SmartEstate.Domain.Entities;
 using SmartEstate.Shared.Time;
+using SmartEstate.App.Common.Abstractions;
 using System.Reflection;
 
 namespace SmartEstate.Infrastructure.Persistence;
@@ -21,26 +22,22 @@ public class SmartEstateDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<BrokerProfile> BrokerProfiles => Set<BrokerProfile>();
     public DbSet<Listing> Listings => Set<Listing>();
     public DbSet<ListingImage> ListingImages => Set<ListingImage>();
     public DbSet<ListingReport> ListingReports => Set<ListingReport>();
     public DbSet<ModerationReport> ModerationReports => Set<ModerationReport>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
-    public DbSet<TakeoverRequest> TakeoverRequests => Set<TakeoverRequest>();
+    public DbSet<BrokerRequest> BrokerRequests => Set<BrokerRequest>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserListingFavorite> UserListingFavorites => Set<UserListingFavorite>();
     public DbSet<UserPoints> UserPoints => Set<UserPoints>();
     public DbSet<PointLedgerEntry> PointLedgerEntries => Set<PointLedgerEntry>();
     public DbSet<PointPackage> PointPackages => Set<PointPackage>();
-    public DbSet<PointPurchase> PointPurchases => Set<PointPurchase>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
     public DbSet<BrokerApplication> BrokerApplications => Set<BrokerApplication>();
     public DbSet<ListingBoost> ListingBoosts => Set<ListingBoost>();
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

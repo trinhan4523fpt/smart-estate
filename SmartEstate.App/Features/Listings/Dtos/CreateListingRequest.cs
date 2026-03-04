@@ -1,4 +1,4 @@
-﻿using SmartEstate.Domain.Enums;
+using SmartEstate.Domain.Enums;
 
 namespace SmartEstate.App.Features.Listings.Dtos;
 
@@ -6,17 +6,16 @@ public sealed record CreateListingRequest(
     string Title,
     string Description,
     PropertyType PropertyType,
-    decimal PriceAmount,
-    string PriceCurrency,
+    TransactionType TransactionType,
+    decimal Price,
     double? AreaM2,
     int? Bedrooms,
     int? Bathrooms,
-    string? FullAddress,
     string? City,
     string? District,
-    string? Ward,
-    string? Street,
-    double? Lat,
-    double? Lng,
-    string? VirtualTourUrl
+    string? Address,
+    decimal? Lat,
+    decimal? Lng,
+    string? VirtualTourUrl,
+    List<string>? Images
 );

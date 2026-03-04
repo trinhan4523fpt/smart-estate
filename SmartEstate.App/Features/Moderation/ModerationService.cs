@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SmartEstate.App.Common.Abstractions;
 using SmartEstate.App.Features.Moderation.Dtos;
 using SmartEstate.Domain.Entities;
 using SmartEstate.Domain.Enums;
@@ -34,7 +35,7 @@ public sealed class ModerationService
         var items = await _db.Listings
             .AsNoTracking()
             .Where(x => !x.IsDeleted
-                && x.ModerationStatus == ModerationStatus.NeedReview
+                && x.ModerationStatus == ModerationStatus.PendingReview
                 && x.LifecycleStatus == ListingLifecycleStatus.Active)
             .Select(x => new
             {
@@ -69,8 +70,8 @@ public sealed class ModerationService
                 return new PendingListingModerationItemDto(
                     l.Id,
                     l.Title,
-                    l.Address.City,
-                    l.Address.District,
+                    l.City,
+                    l.District,
                     l.ModerationStatus,
                     l.LifecycleStatus,
                     l.CreatedAt,
@@ -82,7 +83,7 @@ public sealed class ModerationService
         return Result<IReadOnlyList<PendingListingModerationItemDto>>.Ok(result);
     }
 
-    public async Task<Result> ApproveAsync(Guid listingId, string? reason, CancellationToken ct = default)
+    public async Task<Result> ApproveAsync(Guid listingId, CancellationToken ct = default)
     {
         var adminId = _currentUser.UserId;
         if (adminId is null) return Result.Fail(ErrorCodes.Unauthorized, "Unauthorized.");
@@ -93,7 +94,7 @@ public sealed class ModerationService
 
         if (listing is null) return Result.Fail(ErrorCodes.NotFound, "Listing not found.");
 
-        listing.Approve(reason);
+        listing.Approve();
 
         var latestReport = listing.ModerationReports
             .OrderByDescending(r => r.CreatedAt)
@@ -105,7 +106,7 @@ public sealed class ModerationService
                 listing.Id,
                 listing.QualityScore,
                 "NEED_REVIEW",
-                reason,
+                null,
                 listing.AiFlagsJson);
 
             _db.ModerationReports.Add(latestReport);

@@ -147,19 +147,14 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.ToTable("broker_applications", (string)null);
                 });
 
-            modelBuilder.Entity("SmartEstate.Domain.Entities.BrokerProfile", b =>
+            modelBuilder.Entity("SmartEstate.Domain.Entities.BrokerRequest", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Bio")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("CompanyName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<Guid>("BrokerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -173,18 +168,36 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Property<Guid?>("DeletedBy")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("FeePaidByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FeeStatus")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("LicenseNo")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<decimal>("RatingAvg")
-                        .HasColumnType("decimal(5,2)");
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("datetimeoffset");
 
-                    b.Property<int>("RatingCount")
-                        .HasColumnType("int");
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("SellerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("TakeoverFeeAmount")
+                        .HasColumnType("numeric(18,0)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -192,15 +205,15 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.HasIndex("BrokerId");
 
-                    b.ToTable("broker_profiles", (string)null);
+                    b.HasIndex("ListingId");
+
+                    b.HasIndex("SellerId");
+
+                    b.ToTable("broker_requests", (string)null);
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.Conversation", b =>
@@ -274,8 +287,14 @@ namespace SmartEstate.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("AiFlagsJson")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<double?>("AreaM2")
                         .HasColumnType("float");
@@ -288,6 +307,13 @@ namespace SmartEstate.Infrastructure.Migrations
 
                     b.Property<int?>("Bedrooms")
                         .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -306,35 +332,68 @@ namespace SmartEstate.Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(5000)
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("District")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsBrokerManaged")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("LifecycleStatus")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("Lat")
+                        .HasColumnType("decimal(10,8)");
+
+                    b.Property<string>("LifecycleStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal?>("Lng")
+                        .HasColumnType("decimal(11,8)");
 
                     b.Property<string>("ModerationReason")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("ModerationStatus")
-                        .HasColumnType("int");
+                    b.Property<string>("ModerationStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("PropertyType")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Price")
+                        .HasColumnType("numeric(18,0)");
+
+                    b.Property<string>("PropertyType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<decimal?>("QualityScore")
-                        .HasColumnType("decimal(5,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ResponsibleUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SellerName")
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("SellerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -343,8 +402,7 @@ namespace SmartEstate.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("VirtualTourUrl")
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -352,11 +410,7 @@ namespace SmartEstate.Infrastructure.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("IsDeleted");
-
                     b.HasIndex("ResponsibleUserId");
-
-                    b.HasIndex("ModerationStatus", "LifecycleStatus");
 
                     b.ToTable("listings", (string)null);
                 });
@@ -665,94 +719,18 @@ namespace SmartEstate.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,0)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid?>("ListingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("PaidAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("PayUrl")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<Guid>("PayerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("PointPurchaseId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Provider")
+                    b.Property<string>("Currency")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ProviderRef")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("RawPayloadJson")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("TakeoverRequestId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PayerUserId");
-
-                    b.HasIndex("PointPurchaseId");
-
-                    b.HasIndex("TakeoverRequestId");
-
-                    b.HasIndex("Provider", "ProviderRef");
-
-                    b.HasIndex("Type", "Status");
-
-                    b.ToTable("payments", (string)null);
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.Permission", b =>
-                {
-                    b.Property<short>("Id")
-                        .HasColumnType("smallint");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(80)
-                        .HasColumnType("nvarchar(80)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
@@ -761,11 +739,46 @@ namespace SmartEstate.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FeeType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("PayUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("PayerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Provider")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProviderRef")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RawPayloadJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("RefId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RefType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -775,12 +788,7 @@ namespace SmartEstate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
-
-                    b.HasIndex("IsDeleted");
-
-                    b.ToTable("permissions", (string)null);
+                    b.ToTable("payments", (string)null);
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.PointLedgerEntry", b =>
@@ -924,17 +932,24 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.ToTable("point_packages", (string)null);
                 });
 
-            modelBuilder.Entity("SmartEstate.Domain.Entities.PointPurchase", b =>
+            modelBuilder.Entity("SmartEstate.Domain.Entities.PointTransaction", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(18,0)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
@@ -945,6 +960,9 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid?>("PaymentId")
                         .HasColumnType("uniqueidentifier");
 
@@ -954,16 +972,10 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Property<int>("Points")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("PriceAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("PriceCurrency")
+                    b.Property<string>("Status")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -976,186 +988,13 @@ namespace SmartEstate.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IsDeleted");
-
                     b.HasIndex("PaymentId");
 
                     b.HasIndex("PointPackageId");
 
-                    b.HasIndex("Status");
-
                     b.HasIndex("UserId");
 
-                    b.ToTable("point_purchases", (string)null);
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.Role", b =>
-                {
-                    b.Property<short>("Id")
-                        .HasColumnType("smallint");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("roles", (string)null);
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.RolePermission", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<short>("PermissionId")
-                        .HasColumnType("smallint");
-
-                    b.Property<short>("RoleId")
-                        .HasColumnType("smallint");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("PermissionId");
-
-                    b.HasIndex("RoleId");
-
-                    b.HasIndex("RoleId", "PermissionId")
-                        .IsUnique();
-
-                    b.ToTable("role_permissions", (string)null);
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.TakeoverRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("AcceptedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("BrokerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("CancelledAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("DeletedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsFeePaid")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("ListingId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Note")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTimeOffset?>("PaidAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<int>("Payer")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("RejectedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid>("SellerUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsFeePaid");
-
-                    b.HasIndex("SellerUserId");
-
-                    b.HasIndex("BrokerUserId", "Status");
-
-                    b.HasIndex("ListingId", "Status");
-
-                    b.ToTable("takeover_requests", (string)null);
+                    b.ToTable("point_transactions", (string)null);
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.User", b =>
@@ -1163,6 +1002,14 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Avatar")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1201,11 +1048,13 @@ namespace SmartEstate.Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
-                    b.Property<short>("RoleId")
-                        .HasColumnType("smallint");
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("datetimeoffset");
@@ -1219,8 +1068,6 @@ namespace SmartEstate.Infrastructure.Migrations
                         .IsUnique();
 
                     b.HasIndex("IsDeleted");
-
-                    b.HasIndex("RoleId");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1343,15 +1190,31 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("SmartEstate.Domain.Entities.BrokerProfile", b =>
+            modelBuilder.Entity("SmartEstate.Domain.Entities.BrokerRequest", b =>
                 {
-                    b.HasOne("SmartEstate.Domain.Entities.User", "User")
-                        .WithOne("BrokerProfile")
-                        .HasForeignKey("SmartEstate.Domain.Entities.BrokerProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                    b.HasOne("SmartEstate.Domain.Entities.User", "Broker")
+                        .WithMany()
+                        .HasForeignKey("BrokerId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.HasOne("SmartEstate.Domain.Entities.Listing", "Listing")
+                        .WithMany("BrokerRequests")
+                        .HasForeignKey("ListingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SmartEstate.Domain.Entities.User", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Broker");
+
+                    b.Navigation("Listing");
+
+                    b.Navigation("Seller");
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.Conversation", b =>
@@ -1386,7 +1249,7 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.HasOne("SmartEstate.Domain.Entities.User", "AssignedBrokerUser")
                         .WithMany()
                         .HasForeignKey("AssignedBrokerUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("SmartEstate.Domain.Entities.User", "CreatedByUser")
                         .WithMany("CreatedListings")
@@ -1400,109 +1263,9 @@ namespace SmartEstate.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.OwnsOne("SmartEstate.Domain.ValueObjects.Money", "Price", b1 =>
-                        {
-                            b1.Property<Guid>("ListingId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Amount")
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("price_amount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(10)
-                                .HasColumnType("nvarchar(10)")
-                                .HasColumnName("price_currency");
-
-                            b1.HasKey("ListingId");
-
-                            b1.HasIndex("Amount");
-
-                            b1.ToTable("listings");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ListingId");
-                        });
-
-                    b.OwnsOne("SmartEstate.Domain.ValueObjects.AddressParts", "Address", b1 =>
-                        {
-                            b1.Property<Guid>("ListingId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("City")
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)")
-                                .HasColumnName("addr_city");
-
-                            b1.Property<string>("District")
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)")
-                                .HasColumnName("addr_district");
-
-                            b1.Property<string>("FullAddress")
-                                .HasMaxLength(500)
-                                .HasColumnType("nvarchar(500)")
-                                .HasColumnName("addr_full");
-
-                            b1.Property<string>("Street")
-                                .HasMaxLength(200)
-                                .HasColumnType("nvarchar(200)")
-                                .HasColumnName("addr_street");
-
-                            b1.Property<string>("Ward")
-                                .HasMaxLength(100)
-                                .HasColumnType("nvarchar(100)")
-                                .HasColumnName("addr_ward");
-
-                            b1.HasKey("ListingId");
-
-                            b1.HasIndex("City");
-
-                            b1.HasIndex("District");
-
-                            b1.ToTable("listings");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ListingId");
-                        });
-
-                    b.OwnsOne("SmartEstate.Domain.ValueObjects.GeoPoint", "Location", b1 =>
-                        {
-                            b1.Property<Guid>("ListingId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<double>("Lat")
-                                .HasColumnType("float")
-                                .HasColumnName("lat");
-
-                            b1.Property<double>("Lng")
-                                .HasColumnType("float")
-                                .HasColumnName("lng");
-
-                            b1.HasKey("ListingId");
-
-                            b1.HasIndex("Lat");
-
-                            b1.HasIndex("Lng");
-
-                            b1.ToTable("listings");
-
-                            b1.WithOwner()
-                                .HasForeignKey("ListingId");
-                        });
-
-                    b.Navigation("Address")
-                        .IsRequired();
-
                     b.Navigation("AssignedBrokerUser");
 
                     b.Navigation("CreatedByUser");
-
-                    b.Navigation("Location");
-
-                    b.Navigation("Price")
-                        .IsRequired();
 
                     b.Navigation("ResponsibleUser");
                 });
@@ -1586,46 +1349,16 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Navigation("Listing");
                 });
 
-            modelBuilder.Entity("SmartEstate.Domain.Entities.Payment", b =>
-                {
-                    b.OwnsOne("SmartEstate.Domain.ValueObjects.Money", "Amount", b1 =>
-                        {
-                            b1.Property<Guid>("PaymentId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Amount")
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("amount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(8)
-                                .HasColumnType("nvarchar(8)")
-                                .HasColumnName("currency");
-
-                            b1.HasKey("PaymentId");
-
-                            b1.ToTable("payments");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PaymentId");
-                        });
-
-                    b.Navigation("Amount")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.PointPurchase", b =>
+            modelBuilder.Entity("SmartEstate.Domain.Entities.PointTransaction", b =>
                 {
                     b.HasOne("SmartEstate.Domain.Entities.Payment", "Payment")
                         .WithMany()
-                        .HasForeignKey("PaymentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .HasForeignKey("PaymentId");
 
                     b.HasOne("SmartEstate.Domain.Entities.PointPackage", "PointPackage")
                         .WithMany()
                         .HasForeignKey("PointPackageId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("SmartEstate.Domain.Entities.User", "User")
@@ -1639,63 +1372,6 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Navigation("PointPackage");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.RolePermission", b =>
-                {
-                    b.HasOne("SmartEstate.Domain.Entities.Permission", "Permission")
-                        .WithMany()
-                        .HasForeignKey("PermissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SmartEstate.Domain.Entities.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permission");
-
-                    b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.TakeoverRequest", b =>
-                {
-                    b.HasOne("SmartEstate.Domain.Entities.User", "BrokerUser")
-                        .WithMany()
-                        .HasForeignKey("BrokerUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SmartEstate.Domain.Entities.Listing", "Listing")
-                        .WithMany("TakeoverRequests")
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("SmartEstate.Domain.Entities.User", "SellerUser")
-                        .WithMany()
-                        .HasForeignKey("SellerUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("BrokerUser");
-
-                    b.Navigation("Listing");
-
-                    b.Navigation("SellerUser");
-                });
-
-            modelBuilder.Entity("SmartEstate.Domain.Entities.User", b =>
-                {
-                    b.HasOne("SmartEstate.Domain.Entities.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Role");
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.UserListingFavorite", b =>
@@ -1735,6 +1411,8 @@ namespace SmartEstate.Infrastructure.Migrations
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.Listing", b =>
                 {
+                    b.Navigation("BrokerRequests");
+
                     b.Navigation("Conversations");
 
                     b.Navigation("FavoritedByUsers");
@@ -1744,14 +1422,10 @@ namespace SmartEstate.Infrastructure.Migrations
                     b.Navigation("ModerationReports");
 
                     b.Navigation("Reports");
-
-                    b.Navigation("TakeoverRequests");
                 });
 
             modelBuilder.Entity("SmartEstate.Domain.Entities.User", b =>
                 {
-                    b.Navigation("BrokerProfile");
-
                     b.Navigation("BuyerConversations");
 
                     b.Navigation("CreatedListings");

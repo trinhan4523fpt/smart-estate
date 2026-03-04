@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using SmartEstate.App.Common.Abstractions;
 using SmartEstate.App.Features.Favorites.Dtos;
 using SmartEstate.Domain.Entities;
 using SmartEstate.Domain.Enums;
@@ -7,12 +8,8 @@ using SmartEstate.Shared.Errors;
 using SmartEstate.Shared.Paging;
 using SmartEstate.Shared.Results;
 using SmartEstate.Shared.Time;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace SmartEstate.App.Features.Favorites;
-
 
 public sealed class FavoritesService
 {
@@ -39,7 +36,6 @@ public sealed class FavoritesService
 
         var isOwner = listing.ResponsibleUserId == userId;
 
-        // Only allow favorite public listing unless owner/admin
         if (!isAdmin && !isOwner)
         {
             if (listing.ModerationStatus != ModerationStatus.Approved || listing.LifecycleStatus != ListingLifecycleStatus.Active)
@@ -50,7 +46,7 @@ public sealed class FavoritesService
             .AnyAsync(x => x.UserId == userId && x.ListingId == listingId && !x.IsDeleted, ct);
 
         if (exists)
-            return Result.Ok(); // idempotent
+            return Result.Ok();
 
         var fav = UserListingFavorite.Create(userId.Value, listingId);
 
@@ -62,7 +58,6 @@ public sealed class FavoritesService
         }
         catch (DbUpdateException)
         {
-            // unique constraint race => still ok
             return Result.Ok();
         }
 
@@ -77,9 +72,9 @@ public sealed class FavoritesService
         var fav = await _db.UserListingFavorites
             .FirstOrDefaultAsync(x => x.UserId == userId && x.ListingId == listingId && !x.IsDeleted, ct);
 
-        if (fav is null) return Result.Ok(); // idempotent
+        if (fav is null) return Result.Ok();
 
-        fav.IsDeleted = true; // soft delete (since AuditableEntity)
+        fav.IsDeleted = true;
         await _db.SaveChangesAsync(true, ct);
 
         return Result.Ok();
@@ -107,13 +102,13 @@ public sealed class FavoritesService
                 x.ListingId,
                 x.Listing.Title,
                 x.Listing.PropertyType,
-                x.Listing.Price.Amount,
-                x.Listing.Price.Currency,
-                x.Listing.Address.City,
-                x.Listing.Address.District,
-                x.Listing.Address.Ward,
-                x.Listing.Location != null ? x.Listing.Location.Lat : (double?)null,
-                x.Listing.Location != null ? x.Listing.Location.Lng : (double?)null,
+                x.Listing.Price,
+                "VND",
+                x.Listing.City,
+                x.Listing.District,
+                x.Listing.Address, // Ward -> Address
+                (double?)x.Listing.Lat,
+                (double?)x.Listing.Lng,
                 x.Listing.Images
                     .Where(i => !i.IsDeleted)
                     .OrderBy(i => i.SortOrder)

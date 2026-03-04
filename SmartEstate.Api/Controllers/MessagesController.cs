@@ -77,4 +77,13 @@ public class MessagesController : ControllerBase
         if (!result.IsSuccess) return BadRequest(result.Error);
         return Ok();
     }
+
+    [HttpGet("unread-count")]
+    [ProducesResponseType(typeof(object), 200)]
+    public async Task<IActionResult> GetUnreadCount(CancellationToken ct)
+    {
+        var result = await _svc.GetUnreadCountAsync(ct);
+        if (!result.IsSuccess) return BadRequest(result.Error);
+        return Ok(new { Count = result.Value });
+    }
 }

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using SmartEstate.App.Features.Auth;
-using SmartEstate.App.Features.BrokerTakeover;
+using SmartEstate.App.Features.BrokerRequests;
 using SmartEstate.App.Features.Favorites;
 using SmartEstate.App.Features.Listings;
 using SmartEstate.App.Features.Messages;
@@ -22,10 +22,10 @@ public static class DependencyInjection
         services.AddScoped<FavoritesService>();
         services.AddScoped<SearchService>();
         services.AddScoped<MessageService>();
-        services.AddScoped<TakeoverService>();
+        services.AddScoped<BrokerRequestService>();
         services.AddScoped<ModerationService>();
         services.AddScoped<PointsService>();
-        services.AddScoped<PointPurchaseService>();
+        services.AddScoped<PointTransactionService>();
         services.AddScoped<BrokerApplicationService>();
         services.AddScoped<ListingBoostService>();
         services.AddScoped<PaymentReportingService>();

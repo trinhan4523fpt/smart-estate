@@ -20,26 +20,34 @@ public sealed class AdminPaymentsController : ControllerBase
     }
 
     [HttpGet("point-purchases")]
-    [ProducesResponseType(typeof(PointPurchaseTotalsResponse), 200)]
-    public async Task<IActionResult> GetPointPurchaseTotals([FromQuery] DateTimeOffset from, [FromQuery] DateTimeOffset to, CancellationToken ct)
+    public async Task<IActionResult> GetPointPurchaseTotals(
+        [FromQuery] DateTimeOffset? from,
+        [FromQuery] DateTimeOffset? to,
+        CancellationToken ct)
     {
-        var result = await _svc.GetPointPurchaseTotalsAsync(from, to, ct);
-        return ToActionResult(result);
+        var result = await _svc.GetPointPurchaseTotalsAsync(
+            from ?? DateTimeOffset.UtcNow.AddDays(-30),
+            to ?? DateTimeOffset.UtcNow,
+            ct);
+
+        if (!result.IsSuccess) return BadRequest(result.Error);
+        return Ok(result.Value);
     }
 
-    private IActionResult ToActionResult<T>(Result<T> result)
+    [HttpGet]
+    public async Task<IActionResult> GetPayments(CancellationToken ct)
     {
-        if (result.IsSuccess) return Ok(result.Value);
+        var result = await _svc.GetPaymentsAsync(ct);
+        if (!result.IsSuccess) return BadRequest(result.Error);
+        return Ok(result.Value);
+    }
 
-        return result.Error?.Code switch
-        {
-            ErrorCodes.Validation => BadRequest(result.Error),
-            ErrorCodes.Unauthorized => Unauthorized(result.Error),
-            ErrorCodes.Forbidden => Forbid(),
-            ErrorCodes.NotFound => NotFound(result.Error),
-            ErrorCodes.Conflict => Conflict(result.Error),
-            _ => StatusCode(500, result.Error ?? new AppError(ErrorCodes.Unexpected, "Unexpected error"))
-        };
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory(CancellationToken ct)
+    {
+        var result = await _svc.GetPaymentsAsync(ct);
+        if (!result.IsSuccess) return BadRequest(result.Error);
+        return Ok(result.Value);
     }
 }
 

@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using SmartEstate.App.Features.Search;
 using SmartEstate.App.Features.Search.Dtos;
+using SmartEstate.Domain.Enums;
 using SmartEstate.Shared.Errors;
 
 namespace SmartEstate.Api.Controllers;
@@ -16,14 +17,13 @@ public sealed class SearchController : ControllerBase
         _svc = svc;
     }
 
-    // GET /api/search/listings?...querystring
     [HttpGet("listings")]
     public async Task<IActionResult> SearchListings(
         [FromQuery] string? keyword,
         [FromQuery] string? city,
         [FromQuery] string? district,
-        [FromQuery] string? ward,
         [FromQuery] int? propertyType,
+        [FromQuery] int? transactionType,
         [FromQuery] decimal? minPrice,
         [FromQuery] decimal? maxPrice,
         [FromQuery] double? minAreaM2,
@@ -39,14 +39,16 @@ public sealed class SearchController : ControllerBase
         [FromQuery] string sort = "newest",
         CancellationToken ct = default)
     {
-        var pt = propertyType is null ? null : (SmartEstate.Domain.Enums.PropertyType?)propertyType.Value;
+        var pt = propertyType is null ? null : (PropertyType?)propertyType.Value;
+        var tt = transactionType is null ? null : (TransactionType?)transactionType.Value;
 
         var req = new SearchRequest(
             Keyword: keyword,
             City: city,
             District: district,
-            Ward: ward,
+            Ward: null,
             PropertyType: pt,
+            TransactionType: tt,
             MinPrice: minPrice,
             MaxPrice: maxPrice,
             MinAreaM2: minAreaM2,
@@ -66,6 +68,7 @@ public sealed class SearchController : ControllerBase
         if (!result.IsSuccess)
             return BadRequest(result.Error ?? new AppError(ErrorCodes.Unexpected, "Unexpected error"));
 
-        return Ok(result.Value);
+        // Frontend mock returns Listing[].
+        return Ok(result.Value.Items);
     }
 }
